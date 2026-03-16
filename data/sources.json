@@ -1,0 +1,539 @@
+[
+  {
+    "id": "src-dronelife",
+    "name": "Drone Life",
+    "type": "rss",
+    "url": "https://dronelife.com/feed/"
+  },
+  {
+    "id": "src-robotreport",
+    "name": "The Robot Report",
+    "type": "rss",
+    "url": "https://www.therobotreport.com/feed/"
+  },
+  {
+    "id": "src-mit-ai",
+    "name": "MIT News AI",
+    "type": "rss",
+    "url": "https://news.mit.edu/rss/topic/artificial-intelligence2",
+    "must_contain_any": ["robot", "robotics", "physical ai", "embodied ai", "computer vision", "autonomous", "드론", "로봇", "피지컬 ai"]
+  },
+  {
+    "id": "src-easa",
+    "name": "EASA News",
+    "type": "rss",
+    "url": "https://www.easa.europa.eu/en/newsroom-and-events/news/rss.xml",
+    "must_contain_any": ["drone", "uav", "uas", "airspace", "무인기", "드론", "도심항공교통"]
+  },
+  {
+    "id": "src-etnews-ai",
+    "name": "ETNews AI",
+    "type": "rss",
+    "url": "http://rss.etnews.com/04046.xml"
+  },
+  {
+    "id": "src-etnews-drone-uam",
+    "name": "ETNews Drone/UAM",
+    "type": "rss",
+    "url": "http://rss.etnews.com/17.xml"
+  },
+  {
+    "id": "src-crossref-drone-ai",
+    "name": "Crossref Drone AI Research",
+    "type": "crossref",
+    "url": "https://api.crossref.org/works",
+    "query": "\"drone\" OR UAV OR \"physical AI\" OR robotics OR humanoid",
+    "page_size": 6,
+    "must_contain_any": ["drone", "uav", "unmanned aerial", "swarm", "autonomous flight", "robotics", "physical ai", "humanoid"]
+  },
+  {
+    "id": "src-europepmc-ai-robotics",
+    "name": "Europe PMC AI Robotics",
+    "type": "europepmc",
+    "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search",
+    "query": "\"drone\" OR \"autonomous flight\" OR robotics OR \"physical AI\" OR humanoid",
+    "page_size": 6,
+    "must_contain_any": ["drone", "uav", "unmanned aerial", "swarm", "autonomous flight", "robotics", "physical ai", "humanoid"]
+  },
+  {
+    "id": "src-kci-korea-drone-ai",
+    "name": "KCI Korea Drone AI Papers",
+    "type": "kci",
+    "url": "https://open.kci.go.kr/po/openapi/openApiSearch.kci",
+    "query": "드론 무인기 피지컬AI 로봇 자율비행",
+    "page_size": 10,
+    "env_key": "KCI_API_KEY",
+    "must_contain_any": ["드론", "무인기", "자율비행", "UAV", "피지컬AI", "피지컬 AI", "로봇", "로보틱스", "휴머노이드"]
+  },
+  {
+    "id": "src-newsapi-global",
+    "name": "NewsAPI Global Drone AI",
+    "type": "newsapi",
+    "url": "https://newsapi.org/v2/everything",
+    "query": "\"drone\" OR UAV OR robotics OR \"physical AI\" OR humanoid OR \"autonomous robot\"",
+    "language": "en",
+    "page_size": 10,
+    "env_key": "NEWSAPI_KEY",
+    "must_contain_any": ["drone", "uav", "robotics", "physical ai", "humanoid", "robot", "autonomous robot"]
+  },
+  {
+    "id": "src-newsapi-korea",
+    "name": "NewsAPI Korea Major Media",
+    "type": "newsapi",
+    "url": "https://newsapi.org/v2/everything",
+    "query": "드론 OR 무인기 OR UAM OR 피지컬AI OR 로봇 OR 휴머노이드 OR 자율비행",
+    "language": "ko",
+    "page_size": 10,
+    "env_key": "NEWSAPI_KEY"
+  },
+  {
+    "id": "src-gnews-global",
+    "name": "GNews Global Drone AI",
+    "type": "gnews",
+    "url": "https://gnews.io/api/v4/search",
+    "query": "\"drone\" OR UAV OR robotics OR \"physical AI\" OR humanoid OR \"autonomous robot\"",
+    "language": "en",
+    "page_size": 10,
+    "env_key": "GNEWS_API_KEY",
+    "must_contain_any": ["drone", "uav", "robotics", "physical ai", "humanoid", "robot", "autonomous robot"]
+  },
+  {
+    "id": "src-google-news-kr-drone",
+    "name": "Google News Korea 드론",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=%EB%93%9C%EB%A1%A0%20OR%20%EB%AC%B4%EC%9D%B8%EA%B8%B0%20OR%20UAM&hl=ko&gl=KR&ceid=KR:ko"
+  },
+  {
+    "id": "src-google-news-kr-robot",
+    "name": "Google News Korea 로봇/AI",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=%EB%A1%9C%EB%B4%87%20OR%20%ED%9C%B4%EB%A8%B8%EB%85%B8%EC%9D%B4%EB%93%9C%20OR%20%ED%94%BC%EC%A7%80%EC%BB%ACAI&hl=ko&gl=KR&ceid=KR:ko"
+  },
+  {
+    "id": "src-suas-news",
+    "name": "sUAS News",
+    "type": "rss",
+    "url": "https://www.suasnews.com/feed/"
+  },
+  {
+    "id": "src-techcrunch-ai",
+    "name": "TechCrunch AI",
+    "type": "rss",
+    "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+    "must_contain_any": ["drone", "uav", "robot", "robotics", "humanoid", "physical ai", "autonomous", "embodied"]
+  },
+  {
+    "id": "src-ieee-robotics",
+    "name": "IEEE Spectrum Robotics",
+    "type": "rss",
+    "url": "https://spectrum.ieee.org/feeds/topic/robotics.rss"
+  },
+  {
+    "id": "src-unmanned-airspace",
+    "name": "Unmanned Airspace",
+    "type": "rss",
+    "url": "https://www.unmannedairspace.info/feed/"
+  },
+  {
+    "id": "src-defense-one",
+    "name": "Defense One Tech",
+    "type": "rss",
+    "url": "https://www.defenseone.com/rss/technology/",
+    "must_contain_any": ["drone", "uav", "uas", "robot", "autonomous", "ai"]
+  },
+  {
+    "id": "src-warzone",
+    "name": "The War Zone",
+    "type": "rss",
+    "url": "https://www.thedrive.com/the-war-zone/feed",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "autonomous", "robot"]
+  },
+  {
+    "id": "src-scmp-tech",
+    "name": "SCMP (South China Morning Post)",
+    "type": "rss",
+    "url": "https://www.scmp.com/rss/5/feed",
+    "must_contain_any": ["drone", "uav", "robot", "ai", "autonomous", "humanoid", "dji"]
+  },
+  {
+    "id": "src-aljazeera",
+    "name": "Al Jazeera",
+    "type": "rss",
+    "url": "https://www.aljazeera.com/xml/rss/all.xml",
+    "must_contain_any": ["drone", "uav", "robot", "unmanned", "autonomous"]
+  },
+  {
+    "id": "src-gnews-korea",
+    "name": "GNews Korea Major Media",
+    "type": "gnews",
+    "url": "https://gnews.io/api/v4/search",
+    "query": "드론 OR 무인기 OR UAM OR 피지컬AI OR 로봇 OR 휴머노이드 OR 자율비행",
+    "language": "ko",
+    "page_size": 10,
+    "env_key": "GNEWS_API_KEY"
+  },
+
+  {"_comment": "=== 미국 — 기관 리포트 ==="},
+  {
+    "id": "src-faa-newsroom",
+    "name": "FAA Newsroom",
+    "type": "rss",
+    "url": "https://www.faa.gov/newsroom/rss",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "bvlos", "remote id", "airspace"]
+  },
+  {
+    "id": "src-rand-uav",
+    "name": "RAND Corporation UAV",
+    "type": "rss",
+    "url": "https://www.rand.org/topics/unmanned-aerial-vehicles.xml",
+    "content_class": "report"
+  },
+  {
+    "id": "src-gao-reports",
+    "name": "GAO Reports (미 감사원)",
+    "type": "rss",
+    "url": "https://www.gao.gov/rss/reports.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "autonomous", "robotics"]
+  },
+  {
+    "id": "src-crs-reports",
+    "name": "CRS Reports (미 의회조사국)",
+    "type": "rss",
+    "url": "https://crsreports.congress.gov/rss/AllReports",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "autonomous", "robotics"]
+  },
+  {
+    "id": "src-brookings-ai",
+    "name": "Brookings AI & Tech",
+    "type": "rss",
+    "url": "https://www.brookings.edu/topic/artificial-intelligence/feed/",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned", "aerial"]
+  },
+  {
+    "id": "src-nasa-uam",
+    "name": "NASA UAM / AAM",
+    "type": "rss",
+    "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "urban air", "aam", "uam", "evtol", "autonomous"]
+  },
+  {
+    "id": "src-darpa-news",
+    "name": "DARPA News",
+    "type": "rss",
+    "url": "https://www.darpa.mil/RSS",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "autonomous", "swarm", "robot"]
+  },
+
+  {"_comment": "=== 유럽 — 뉴스 + 기관 리포트 ==="},
+  {
+    "id": "src-easa-reports",
+    "name": "EASA Drone Reports",
+    "type": "rss",
+    "url": "https://www.easa.europa.eu/en/document-library/rss.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "rpas", "u-space"]
+  },
+  {
+    "id": "src-uk-caa",
+    "name": "UK CAA News",
+    "type": "rss",
+    "url": "https://www.caa.co.uk/newsroom/rss/",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "rpas", "airspace"]
+  },
+  {
+    "id": "src-dlr-de",
+    "name": "DLR (독일항공우주센터)",
+    "type": "rss",
+    "url": "https://www.dlr.de/en/latest/news/rss",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "unmanned", "urban air", "robot", "autonomous"]
+  },
+  {
+    "id": "src-ec-transport",
+    "name": "EU Commission Transport",
+    "type": "rss",
+    "url": "https://transport.ec.europa.eu/rss_en",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "u-space", "urban air"]
+  },
+  {
+    "id": "src-google-news-eu-drone",
+    "name": "Google News EU Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial&hl=en&gl=GB&ceid=GB:en"
+  },
+
+  {"_comment": "=== 중국 ==="},
+  {
+    "id": "src-xinhua-tech",
+    "name": "Xinhua Tech (新华网科技)",
+    "type": "rss",
+    "url": "http://www.news.cn/tech/rss.xml",
+    "must_contain_any": ["drone", "无人机", "机器人", "uav", "autonomous", "robot"]
+  },
+  {
+    "id": "src-google-news-cn-drone",
+    "name": "Google News China Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=%E6%97%A0%E4%BA%BA%E6%9C%BA+OR+drone+OR+%E6%9C%BA%E5%99%A8%E4%BA%BA&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+  },
+  {
+    "id": "src-caac-cn",
+    "name": "CAAC (中国民航局)",
+    "type": "rss",
+    "url": "http://www.caac.gov.cn/rss/",
+    "content_class": "report",
+    "must_contain_any": ["无人机", "无人驾驶", "drone", "uav", "通用航空"]
+  },
+
+  {"_comment": "=== 일본 ==="},
+  {
+    "id": "src-google-news-jp-drone",
+    "name": "Google News Japan ドローン",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=%E3%83%89%E3%83%AD%E3%83%BC%E3%83%B3+OR+%E7%84%A1%E4%BA%BA%E6%A9%9F+OR+UAM&hl=ja&gl=JP&ceid=JP:ja"
+  },
+  {
+    "id": "src-mlit-jp",
+    "name": "国土交通省 (일본 국교성)",
+    "type": "rss",
+    "url": "https://www.mlit.go.jp/rss/kuukou/press.rdf",
+    "content_class": "report",
+    "must_contain_any": ["ドローン", "無人機", "空飛ぶ", "drone", "uav"]
+  },
+  {
+    "id": "src-jaxa-jp",
+    "name": "JAXA (일본 우주항공연구)",
+    "type": "rss",
+    "url": "https://www.jaxa.jp/rss/press_j.rdf",
+    "content_class": "report",
+    "must_contain_any": ["ドローン", "無人機", "drone", "uav", "autonomous", "自律"]
+  },
+  {
+    "id": "src-nedo-jp",
+    "name": "NEDO (신에너지산업기술개발기구)",
+    "type": "rss",
+    "url": "https://www.nedo.go.jp/rss/news.rdf",
+    "content_class": "report",
+    "must_contain_any": ["ドローン", "無人機", "ロボット", "drone", "uav", "robot"]
+  },
+
+  {"_comment": "=== 동남아 ==="},
+  {
+    "id": "src-google-news-sea-drone",
+    "name": "Google News Southeast Asia Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial+Singapore+OR+Thailand+OR+Indonesia+OR+Vietnam+OR+Philippines+OR+Malaysia&hl=en&gl=SG&ceid=SG:en"
+  },
+  {
+    "id": "src-caas-sg",
+    "name": "CAAS Singapore",
+    "type": "rss",
+    "url": "https://www.caas.gov.sg/rss/media-releases",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "urban air", "uam"]
+  },
+  {
+    "id": "src-straits-times-tech",
+    "name": "Straits Times Tech",
+    "type": "rss",
+    "url": "https://www.straitstimes.com/tech/rss.xml",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned"]
+  },
+  {
+    "id": "src-channelnewsasia-tech",
+    "name": "CNA (Channel NewsAsia) Tech",
+    "type": "rss",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6936",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned"]
+  },
+
+  {"_comment": "=== 아랍 / 중동 ==="},
+  {
+    "id": "src-google-news-mideast-drone",
+    "name": "Google News Middle East Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial+UAE+OR+Saudi+OR+Qatar+OR+Israel&hl=en&gl=AE&ceid=AE:en"
+  },
+  {
+    "id": "src-gulf-news-tech",
+    "name": "Gulf News Tech",
+    "type": "rss",
+    "url": "https://gulfnews.com/rss/technology",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned"]
+  },
+  {
+    "id": "src-arabnews-tech",
+    "name": "Arab News Technology",
+    "type": "rss",
+    "url": "https://www.arabnews.com/rss/technology",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned"]
+  },
+  {
+    "id": "src-uae-gcaa",
+    "name": "UAE GCAA (항공청)",
+    "type": "rss",
+    "url": "https://www.gcaa.gov.ae/en/Pages/rss.aspx",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "rpas"]
+  },
+
+  {"_comment": "=== 러시아 / CIS ==="},
+  {
+    "id": "src-google-news-ru-drone",
+    "name": "Google News Russia Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=%D0%B4%D1%80%D0%BE%D0%BD+OR+%D0%B1%D0%BF%D0%BB%D0%B0+OR+%D0%B1%D0%B5%D1%81%D0%BF%D0%B8%D0%BB%D0%BE%D1%82%D0%BD%D0%B8%D0%BA&hl=ru&gl=RU&ceid=RU:ru"
+  },
+  {
+    "id": "src-tass-tech",
+    "name": "TASS Science/Tech",
+    "type": "rss",
+    "url": "https://tass.com/rss/v2.xml",
+    "must_contain_any": ["drone", "uav", "бпла", "беспилотник", "robot", "autonomous"]
+  },
+
+  {"_comment": "=== 아프리카 ==="},
+  {
+    "id": "src-google-news-africa-drone",
+    "name": "Google News Africa Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial+Africa+OR+Kenya+OR+Nigeria+OR+Rwanda+OR+South+Africa+OR+Ghana&hl=en&gl=ZA&ceid=ZA:en"
+  },
+  {
+    "id": "src-techcabal-africa",
+    "name": "TechCabal Africa",
+    "type": "rss",
+    "url": "https://techcabal.com/feed/",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned", "delivery"]
+  },
+  {
+    "id": "src-africanews-tech",
+    "name": "Africanews Sci-Tech",
+    "type": "rss",
+    "url": "https://www.africanews.com/feed/rss/scitech",
+    "must_contain_any": ["drone", "uav", "robot", "autonomous", "unmanned"]
+  },
+  {
+    "id": "src-au-sti",
+    "name": "African Union STI Reports",
+    "type": "rss",
+    "url": "https://au.int/rss.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "unmanned", "robot", "autonomous", "technology"]
+  },
+
+  {"_comment": "=== 인도 / 남아시아 ==="},
+  {
+    "id": "src-google-news-india-drone",
+    "name": "Google News India Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial&hl=en&gl=IN&ceid=IN:en"
+  },
+  {
+    "id": "src-dgca-india",
+    "name": "DGCA India (인도 항공청)",
+    "type": "rss",
+    "url": "https://www.dgca.gov.in/digigov-portal/jsp/dgca/homePage/rss/rssFeedXml.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "rpas", "remotely piloted"]
+  },
+
+  {"_comment": "=== 오세아니아 ==="},
+  {
+    "id": "src-google-news-au-drone",
+    "name": "Google News Australia Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=drone+OR+UAV+OR+unmanned+aerial&hl=en&gl=AU&ceid=AU:en"
+  },
+  {
+    "id": "src-casa-au",
+    "name": "CASA Australia (항공안전청)",
+    "type": "rss",
+    "url": "https://www.casa.gov.au/rss.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "rpas", "uav", "unmanned", "remotely piloted"]
+  },
+
+  {"_comment": "=== 중남미 ==="},
+  {
+    "id": "src-google-news-latam-drone",
+    "name": "Google News LatAm Drone",
+    "type": "rss",
+    "url": "https://news.google.com/rss/search?q=dron+OR+drone+OR+UAV+OR+veh%C3%ADculo+a%C3%A9reo+no+tripulado&hl=es&gl=MX&ceid=MX:es"
+  },
+
+  {"_comment": "=== 국제기구 ==="},
+  {
+    "id": "src-wef-drones",
+    "name": "World Economic Forum",
+    "type": "rss",
+    "url": "https://www.weforum.org/communities/drones-and-tomorrow-s-airspace/feed",
+    "content_class": "report"
+  },
+  {
+    "id": "src-icao-news",
+    "name": "ICAO UAS Publications",
+    "type": "rss",
+    "url": "https://www.icao.int/Newsroom/RSS/Pages/default.aspx",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "uas", "unmanned", "rpas", "urban air"]
+  },
+  {
+    "id": "src-oecd-sti",
+    "name": "OECD Science & Tech",
+    "type": "rss",
+    "url": "https://www.oecd.org/science/rss/index.xml",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "unmanned", "robot", "autonomous", "aerial"]
+  },
+  {
+    "id": "src-itu-news",
+    "name": "ITU News (국제전기통신연합)",
+    "type": "rss",
+    "url": "https://news.itu.int/feed/",
+    "content_class": "report",
+    "must_contain_any": ["drone", "uav", "unmanned", "robot", "autonomous", "spectrum"]
+  },
+
+  {"_comment": "=== 한국 — 기관 리포트 ==="},
+  {
+    "id": "src-molit-kr",
+    "name": "국토교통부 보도자료",
+    "type": "rss",
+    "url": "https://www.molit.go.kr/RSS/portal_news.xml",
+    "content_class": "report",
+    "must_contain_any": ["드론", "무인기", "UAM", "도심항공", "자율비행", "비행체", "로봇"]
+  },
+  {
+    "id": "src-msit-kr",
+    "name": "과학기술정보통신부",
+    "type": "rss",
+    "url": "https://www.msit.go.kr/bbs/list.do?sCode=user&mId=113&mPid=238&bbsSeqNo=94&nttSeqNo=&searchOpt=ALL&searchTxt=&pageIndex=1&rss=Y",
+    "content_class": "report",
+    "must_contain_any": ["드론", "무인기", "로봇", "AI", "인공지능", "자율", "피지컬"]
+  },
+  {
+    "id": "src-kari-kr",
+    "name": "한국항공우주연구원 KARI",
+    "type": "rss",
+    "url": "https://www.kari.re.kr/cop/bbs/BBSMSTR_000000000031/rssList.do",
+    "content_class": "report",
+    "must_contain_any": ["드론", "무인기", "UAM", "도심항공", "자율비행", "비행"]
+  },
+  {
+    "id": "src-kiast-kr",
+    "name": "한국항공우주산업 KAI",
+    "type": "rss",
+    "url": "https://www.koreaaero.com/rss/press.xml",
+    "content_class": "report",
+    "must_contain_any": ["드론", "무인기", "UAM", "자율", "비행"]
+  }
+]

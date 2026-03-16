@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+data/runtime_state.json
+data/discovered_sources.json
+.claude/

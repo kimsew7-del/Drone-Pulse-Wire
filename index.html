@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drone Pulse Wire</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">DP</div>
+          <div>
+            <p class="eyebrow">Drone + AI Social Wire</p>
+            <h1>Drone Pulse Wire</h1>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a class="nav-pill report-pill" href="./monitor.html">
+            <span class="nav-pill-icon">R</span>
+            <strong>리포트</strong>
+          </a>
+          <a class="live-pill live-link" href="./health_monitor.html">
+            <span class="live-dot"></span>
+            <strong id="feed-status">SYNCING</strong>
+          </a>
+        </div>
+      </header>
+
+      <main class="page-grid">
+        <aside class="left-rail">
+          <section class="hero-card">
+            <p class="hero-kicker">Global Signal Feed</p>
+            <h2>드론과 AI의 가장 빠른 흐름을 한 화면에.</h2>
+            <p>
+              전세계 뉴스를 피드처럼 이어 보고, 지금 뜨는 키워드와 신기술
+              리포트를 같은 리듬으로 읽습니다.
+            </p>
+            <div class="hero-stats">
+              <article>
+                <span>추적 소스</span>
+                <strong id="tracked-count">0</strong>
+              </article>
+              <article>
+                <span>실시간 피드</span>
+                <strong id="results-count">0건</strong>
+              </article>
+            </div>
+          </section>
+
+          <section class="panel category-panel">
+            <div class="panel-head">
+              <h2>오토 카테고리</h2>
+              <p>자동 발견</p>
+            </div>
+            <div class="category-tabs">
+              <button class="category-tab active" data-window="24h" type="button">24시간</button>
+              <button class="category-tab" data-window="3d" type="button">3일</button>
+              <button class="category-tab" data-window="7d" type="button">7일</button>
+            </div>
+            <div id="category-list" class="category-list"></div>
+          </section>
+
+          <section class="panel trend-panel">
+            <div class="panel-head">
+              <h2>최근 트렌드</h2>
+              <p>키워드, 빈도, 흐름</p>
+            </div>
+            <div id="trend-metrics" class="trend-metrics"></div>
+            <div id="trend-summary" class="trend-summary"></div>
+            <div id="trend-list" class="trend-list"></div>
+          </section>
+
+          <section class="panel signal-panel">
+            <div class="panel-head">
+              <h2>라이브 시그널</h2>
+              <p>수집 상태 브리프</p>
+            </div>
+            <div id="signal-list" class="signal-list"></div>
+          </section>
+        </aside>
+
+        <section class="feed-column">
+          <section class="composer-bar">
+            <div class="control-group">
+              <label for="search">검색</label>
+              <input id="search" type="search" placeholder="키워드, 기업, 국가, 기술" />
+            </div>
+            <div class="control-group">
+              <label for="topic-filter">주제</label>
+              <select id="topic-filter">
+                <option value="all">전체</option>
+                <option value="Drone">드론</option>
+                <option value="AI">AI</option>
+                <option value="Drone + AI">드론 + AI</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="content-filter">분류</label>
+              <select id="content-filter">
+                <option value="all">전체</option>
+                <option value="news">뉴스</option>
+                <option value="report">리포트</option>
+                <option value="research">연구</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label for="category-filter">카테고리</label>
+              <select id="category-filter">
+                <option value="all">전체</option>
+              </select>
+            </div>
+            <button id="refresh-button" class="refresh-button" type="button">
+              피드 갱신
+            </button>
+          </section>
+
+          <div id="stories-strip" class="stories-strip"></div>
+          <div id="news-list" class="feed-list"></div>
+        </section>
+
+        <aside class="right-rail">
+          <section class="panel report-panel">
+            <div class="panel-head">
+              <h2>신기술 리포트</h2>
+              <p>자동 생성 요약</p>
+            </div>
+            <div id="report-summary" class="report-summary"></div>
+            <div id="report-list" class="report-list"></div>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <template id="feed-card-template">
+      <article class="feed-card">
+        <header class="feed-card-head">
+          <div class="feed-author">
+            <div class="author-avatar"></div>
+            <div>
+              <strong class="source-name"></strong>
+              <div class="card-meta-line">
+                <span class="region"></span>
+                <span class="dot-sep"></span>
+                <span class="timestamp"></span>
+              </div>
+            </div>
+          </div>
+          <div class="card-badges"></div>
+        </header>
+        <div class="feed-cover">
+          <div class="cover-topic"></div>
+          <h3 class="headline"></h3>
+          <p class="original-headline"></p>
+        </div>
+        <div class="feed-body">
+          <p class="summary"></p>
+          <p class="original-summary"></p>
+          <p class="duplicate-note"></p>
+          <p class="merged-summary"></p>
+          <div class="highlights"></div>
+          <div class="related-wrapper"></div>
+        </div>
+        <footer class="feed-card-foot">
+          <div class="feed-actions">
+            <button class="feed-action like-button" type="button">공감</button>
+            <button class="feed-action save-button" type="button">저장</button>
+            <button class="feed-action translate-button" type="button">번역</button>
+            <button class="feed-action share-button" type="button">공유</button>
+            <button class="feed-action related-button" type="button">관련</button>
+          </div>
+          <span class="impact"></span>
+          <a class="source-link" href="#" target="_blank" rel="noreferrer">원문 보기</a>
+        </footer>
+      </article>
+    </template>
+
+    <script src="./utils.js"></script>
+    <script src="./app.js?v=5"></script>
+  </body>
+</html>

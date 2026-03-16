@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drone Pulse Wire — Health Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Instrument+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand-lockup">
+          <div class="brand-mark">DP</div>
+          <div>
+            <p class="eyebrow">Source Monitoring</p>
+            <h1>Health Monitor <span id="monitor-status" style="font-size:0.7em;color:var(--accent)"></span></h1>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <a class="nav-pill" href="./index.html" style="background:rgba(255,107,44,0.12);color:var(--accent)">
+            <strong>피드</strong>
+          </a>
+          <a class="nav-pill report-pill" href="./monitor.html">
+            <span class="nav-pill-icon">R</span>
+            <strong>리포트</strong>
+          </a>
+        </div>
+      </header>
+
+      <main class="monitor-grid">
+        <section class="panel monitor-hero">
+          <div class="panel-head">
+            <h2>소스 상태 대시보드</h2>
+            <p id="monitor-summary">로딩중</p>
+          </div>
+          <div id="monitor-metrics" class="trend-metrics"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>소스 상태</h2>
+            <p id="sources-count">0개 소스</p>
+          </div>
+          <div id="source-list" class="source-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>라이브 시그널</h2>
+            <p>수집 계층 상태</p>
+          </div>
+          <div id="signal-list" class="signal-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./utils.js"></script>
+    <script src="./health_monitor.js"></script>
+  </body>
+</html>
