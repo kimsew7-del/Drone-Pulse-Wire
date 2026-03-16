@@ -31,7 +31,7 @@ def fetch_json(base_url: str, params: dict[str, str]) -> dict[str, Any]:
     request = Request(
         f"{base_url}?{urlencode(params)}",
         headers={
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
             "Accept": "application/json",
         },
     )
@@ -92,7 +92,7 @@ def fetch_rss_source(source: dict[str, Any], sources: list[dict[str, Any]]) -> l
     request = Request(
         source["url"],
         headers={
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
             "Accept": "application/rss+xml, application/xml, text/xml",
         },
     )
@@ -273,7 +273,7 @@ def fetch_kci_source(source: dict[str, Any], sources: list[dict[str, Any]]) -> l
     request = Request(
         f'{source["url"]}?{urlencode(params)}',
         headers={
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
             "Accept": "application/xml, text/xml",
         },
     )

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Drone Pulse Wire</title>
+    <title>Briefwave</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,10 +16,10 @@
     <div class="app-shell">
       <header class="topbar">
         <div class="brand-lockup">
-          <div class="brand-mark">DP</div>
+          <div class="brand-mark">BW</div>
           <div>
-            <p class="eyebrow">Drone + AI Social Wire</p>
-            <h1>Drone Pulse Wire</h1>
+            <p class="eyebrow">Tech Intelligence Feed</p>
+            <h1>Briefwave</h1>
           </div>
         </div>
         <div class="topbar-right">
@@ -89,40 +89,12 @@
 
         <section class="feed-column">
           <section class="composer-bar">
-            <div class="control-group">
-              <label for="search">검색</label>
-              <input id="search" type="search" placeholder="키워드, 기업, 국가, 기술" />
-            </div>
-            <div class="control-group">
-              <label for="topic-filter">주제</label>
-              <select id="topic-filter">
-                <option value="all">전체</option>
-                <option value="Drone">드론</option>
-                <option value="AI">AI</option>
-                <option value="Drone + AI">드론 + AI</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label for="content-filter">분류</label>
-              <select id="content-filter">
-                <option value="all">전체</option>
-                <option value="news">뉴스</option>
-                <option value="report">리포트</option>
-                <option value="research">연구</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label for="category-filter">카테고리</label>
-              <select id="category-filter">
-                <option value="all">전체</option>
-              </select>
-            </div>
+            <input id="search" type="search" placeholder="키워드, 기업, 국가, 기술로 검색" />
             <button id="refresh-button" class="refresh-button" type="button">
               피드 갱신
             </button>
           </section>
 
-          <div id="stories-strip" class="stories-strip"></div>
           <div id="news-list" class="feed-list"></div>
         </section>
 

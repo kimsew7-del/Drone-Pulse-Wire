@@ -33,9 +33,9 @@ from backend.crawl_manager import CrawlManager
 
 
 class NewsService:
-    def __init__(self, base_dir: Path):
+    def __init__(self, base_dir: Path, data_dir: Path | None = None):
         self.base_dir = base_dir
-        self.data_dir = self.base_dir / "data"
+        self.data_dir = data_dir or (self.base_dir / "data")
         self.runtime_path = self.data_dir / "runtime_state.json"
         self.sources = load_json(self.data_dir, "sources.json")
         merge_discovered_sources(self.sources, self.data_dir)

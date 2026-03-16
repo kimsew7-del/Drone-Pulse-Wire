@@ -752,7 +752,7 @@ class CrawlManager:
         request = Request(
             rss_url,
             headers={
-                "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+                "User-Agent": "Briefwave/0.1 (+https://localhost)",
                 "Accept": "application/rss+xml, application/xml, text/xml",
             },
         )

@@ -29,20 +29,6 @@ const TREND_TERMS = [
   "edge",
 ];
 
-const REPORT_TOPICS = [
-  {
-    title: "자율비행 스택",
-    terms: ["autonomous", "navigation", "vision", "flight", "airspace"],
-  },
-  {
-    title: "산업 운영 자동화",
-    terms: ["inspection", "delivery", "logistics", "infrastructure", "mapping"],
-  },
-  {
-    title: "드론 AI 연구",
-    terms: ["drone", "uav", "swarm", "artificial intelligence", "research"],
-  },
-];
 
 const state = {
   feed: [],
@@ -62,8 +48,6 @@ const state = {
   },
   filters: {
     search: "",
-    topic: "all",
-    contentType: "all",
     category: "all",
   },
 };
@@ -75,14 +59,10 @@ const refs = {
   trendList: document.querySelector("#trend-list"),
   reportSummary: document.querySelector("#report-summary"),
   reportList: document.querySelector("#report-list"),
-  storiesStrip: document.querySelector("#stories-strip"),
   signalList: document.querySelector("#signal-list"),
   sourceList: document.querySelector("#source-list"),
   categoryList: document.querySelector("#category-list"),
   search: document.querySelector("#search"),
-  topicFilter: document.querySelector("#topic-filter"),
-  contentFilter: document.querySelector("#content-filter"),
-  categoryFilter: document.querySelector("#category-filter"),
   refreshButton: document.querySelector("#refresh-button"),
   resultsCount: document.querySelector("#results-count"),
   trackedCount: document.querySelector("#tracked-count"),
@@ -116,7 +96,7 @@ function persistStoredSet(key, value) {
 }
 
 function filterFeed() {
-  const { search, topic, contentType, category } = state.filters;
+  const { search, category } = state.filters;
   const query = search.trim().toLowerCase();
 
   return [...state.feed]
@@ -133,13 +113,10 @@ function filterFeed() {
           .join(" ")
           .toLowerCase()
           .includes(query);
-      const matchesTopic = topic === "all" || item.topic === topic;
-      const matchesContent =
-        contentType === "all" || classifyItem(item) === contentType;
       const matchesCategory =
         category === "all" ||
         normalizeArray(item.auto_categories).includes(category);
-      return matchesSearch && matchesTopic && matchesContent && matchesCategory;
+      return matchesSearch && matchesCategory;
     })
     .sort(
       (left, right) =>
@@ -215,20 +192,76 @@ function buildTrendDeltaMap() {
   return deltas;
 }
 
+const TECH_REPORTS = [
+  {
+    title: "드론",
+    terms: ["drone", "drones", "uav", "uas", "bvlos", "eVTOL", "air mobility",
+            "드론", "무인기", "도심항공", "비행체", "UAM"],
+  },
+  {
+    title: "피지컬 AI",
+    terms: ["physical ai", "embodied ai", "sim2real", "world model",
+            "computer vision", "edge ai", "autonomous system",
+            "피지컬 ai", "비전 ai", "월드모델", "자율시스템"],
+  },
+  {
+    title: "로봇",
+    terms: ["robot", "robots", "robotic", "robotics", "humanoid",
+            "manipulation", "mobile robot", "autonomous robot",
+            "로봇", "로보틱스", "휴머노이드", "자율로봇"],
+  },
+];
+
+// 공신력 높은 소스 — 정렬 시 우선
+const AUTHORITATIVE_SOURCES = new Set([
+  "FAA", "NASA", "DARPA", "GAO", "EASA", "ICAO", "OECD",
+  "RAND", "Brookings", "IEEE", "Nature", "Science",
+  "Reuters", "Associated Press", "Bloomberg",
+  "국토부", "과기부", "산업부", "KARI", "KAIST", "ADD",
+  "DLR", "ONERA", "JAXA", "CAAC",
+]);
+
+function isToday(isoString) {
+  if (!isoString) return false;
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear()
+    && d.getMonth() === now.getMonth()
+    && d.getDate() === now.getDate();
+}
+
+function sourceCredibility(item) {
+  // 높을수록 공신력 높음
+  let score = item.impact || 0;
+  const src = (item.source || "").toLowerCase();
+  for (const name of AUTHORITATIVE_SOURCES) {
+    if (src.includes(name.toLowerCase())) { score += 30; break; }
+  }
+  const ct = item.content_type || "";
+  if (ct === "report") score += 20;
+  if (ct === "research") score += 15;
+  return score;
+}
+
 function buildReports(items) {
-  return REPORT_TOPICS.map((topic) => {
-    const matched = items.filter((item) => {
+  // 오늘 기사만
+  const todayItems = items.filter((item) => isToday(item.timestamp));
+
+  return TECH_REPORTS.map((topic) => {
+    const matched = todayItems.filter((item) => {
       const text = `${item.headline} ${item.summary}`.toLowerCase();
-      return topic.terms.some((term) => text.includes(term));
+      return topic.terms.some((term) => text.toLowerCase().includes(term.toLowerCase()));
     });
+
+    // 공신력 + 최신순 정렬
+    matched.sort((a, b) => sourceCredibility(b) - sourceCredibility(a));
 
     const topItems = matched.slice(0, 3);
     const highlights = [];
     topItems.forEach((item) => {
       normalizeArray(item.highlights).forEach((point) => {
-        if (!highlights.includes(point)) {
-          highlights.push(point);
-        }
+        if (!highlights.includes(point)) highlights.push(point);
       });
     });
 
@@ -236,18 +269,14 @@ function buildReports(items) {
       title: topic.title,
       count: matched.length,
       averageImpact: matched.length
-        ? Math.round(
-            matched.reduce((sum, item) => sum + (Number(item.impact) || 0), 0) /
-              matched.length,
-          )
+        ? Math.round(matched.reduce((s, i) => s + (Number(i.impact) || 0), 0) / matched.length)
         : 0,
-      momentum:
-        matched.length >= 5 ? "가속" : matched.length >= 2 ? "관찰" : "초기",
       keywords: highlights.slice(0, 3),
       summary: matched.length
-        ? `${matched.length}건의 기사에서 ${highlights.slice(0, 3).join(", ") || "핵심 기술"} 흐름이 포착됐습니다.`
-        : "관련 기사가 아직 충분히 쌓이지 않았습니다.",
+        ? `오늘 ${matched.length}건 — ${highlights.slice(0, 3).join(", ") || "최신 기술"} 관련 기사가 수집됐습니다.`
+        : "",
       items: topItems,
+      hasUpdate: matched.length > 0,
     };
   });
 }
@@ -306,19 +335,27 @@ function renderTrends(items) {
 
 function renderReports(items) {
   const reports = buildReports(items);
-  const activeReports = reports.filter((report) => report.count > 0);
-  const latestHistory = normalizeArray(state.trendHistory).slice(-1)[0];
-  const previousHistory = normalizeArray(state.trendHistory).slice(-2)[0];
-  const dailyDelta = latestHistory && previousHistory
-    ? (latestHistory.total || 0) - (previousHistory.total || 0)
-    : 0;
+  const activeReports = reports.filter((r) => r.hasUpdate);
+
+  if (!activeReports.length) {
+    refs.reportSummary.innerHTML = `
+      <strong>오늘의 신기술 리포트</strong>
+      <p>오늘 수집된 관련 기사가 아직 없습니다.</p>
+    `;
+    refs.reportList.innerHTML = "";
+    return;
+  }
+
+  const totalToday = activeReports.reduce((s, r) => s + r.count, 0);
   refs.reportSummary.innerHTML = `
-    <strong>${activeReports.length}개 리포트 활성</strong>
-    <p>가장 강한 묶음은 ${activeReports[0]?.title || "아직 없음"}이며 일일 피드 증감은 ${formatDelta(dailyDelta)}입니다.</p>
+    <strong>오늘의 신기술 리포트</strong>
+    <p>${activeReports.map((r) => r.title).join(" · ")} — 총 ${totalToday}건 수집</p>
   `;
   refs.reportList.innerHTML = "";
 
   reports.forEach((report) => {
+    if (!report.hasUpdate) return;
+
     const block = document.createElement("article");
     block.className = "report-card";
     block.innerHTML = `
@@ -327,8 +364,7 @@ function renderReports(items) {
         <span>${report.count}건</span>
       </div>
       <div class="report-meta">
-        <span class="tag">${report.momentum}</span>
-        <span class="tag">평균 영향도 ${report.averageImpact || "-"}</span>
+        <span class="tag">영향도 ${report.averageImpact || "-"}</span>
       </div>
       <p>${report.summary}</p>
       <div class="report-keywords"></div>
@@ -345,12 +381,13 @@ function renderReports(items) {
 
     const links = block.querySelector(".report-links");
     report.items.forEach((item) => {
+      const displayTitle = item.translated_headline || item.headline;
       const link = document.createElement("a");
       link.className = "report-link";
       link.href = item.url;
       link.target = "_blank";
       link.rel = "noreferrer";
-      link.textContent = item.headline;
+      link.textContent = displayTitle;
       links.append(link);
     });
 
@@ -414,9 +451,6 @@ function renderCategories() {
 
     item.addEventListener("click", () => {
       state.filters.category = cat.label;
-      if (refs.categoryFilter) {
-        refs.categoryFilter.value = cat.label;
-      }
       rerender();
     });
 
@@ -424,39 +458,6 @@ function renderCategories() {
   });
 }
 
-function populateCategoryFilter() {
-  if (!refs.categoryFilter) {
-    return;
-  }
-  const current = state.filters.category;
-  refs.categoryFilter.innerHTML = '<option value="all">전체</option>';
-  const categories = state.autoCategories || [];
-  categories.forEach((cat) => {
-    const opt = document.createElement("option");
-    opt.value = cat.label;
-    opt.textContent = `${cat.label} (${cat.article_count || 0})`;
-    refs.categoryFilter.append(opt);
-  });
-  refs.categoryFilter.value = current;
-}
-
-function renderStories(items) {
-  refs.storiesStrip.innerHTML = "";
-
-  items.slice(0, 8).forEach((item) => {
-    const story = document.createElement("article");
-    story.className = "story-chip";
-    const storyType = classifyItem(item);
-    const storyLabel =
-      storyType === "research" ? "연구" : storyType === "report" ? "리포트" : "뉴스";
-    story.innerHTML = `
-      <div class="story-avatar">${item.source.slice(0, 2).toUpperCase()}</div>
-      <strong>${item.source}</strong>
-      <span>${storyLabel}</span>
-    `;
-    refs.storiesStrip.append(story);
-  });
-}
 
 function renderSources() {
   if (!refs.sourceList || !refs.sourcesCount) {
@@ -573,9 +574,6 @@ function renderCardBadges(fragment, item) {
     catBadge.addEventListener("click", (e) => {
       e.stopPropagation();
       state.filters.category = catLabel;
-      if (refs.categoryFilter) {
-        refs.categoryFilter.value = catLabel;
-      }
       rerender();
     });
     badges.append(catBadge);
@@ -785,11 +783,9 @@ async function loadNews() {
   renderMeta();
   renderSources();
   renderSignals();
-  renderStories(state.feed);
   renderTrends(filtered);
   renderReports(filtered);
   renderCategories();
-  populateCategoryFilter();
   renderFeed(filtered);
 }
 
@@ -840,23 +836,6 @@ function bindControls() {
     rerender();
   });
 
-  refs.topicFilter.addEventListener("change", (event) => {
-    state.filters.topic = event.target.value;
-    rerender();
-  });
-
-  refs.contentFilter.addEventListener("change", (event) => {
-    state.filters.contentType = event.target.value;
-    rerender();
-  });
-
-  if (refs.categoryFilter) {
-    refs.categoryFilter.addEventListener("change", (event) => {
-      state.filters.category = event.target.value;
-      rerender();
-    });
-  }
-
   document.querySelectorAll(".category-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".category-tab").forEach((t) => t.classList.remove("active"));
@@ -867,7 +846,6 @@ function bindControls() {
   });
 
   refs.refreshButton.addEventListener("click", refreshFeed);
-
 }
 
 async function init() {

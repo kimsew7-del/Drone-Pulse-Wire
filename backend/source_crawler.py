@@ -29,7 +29,7 @@ DISCOVERED_PATH = DATA_DIR / "discovered_sources.json"
 SOURCES_PATH = DATA_DIR / "sources.json"
 
 TIMEOUT = 15
-USER_AGENT = "DronePulseWire-Crawler/0.1 (+https://localhost)"
+USER_AGENT = "Briefwave-Crawler/0.1 (+https://localhost)"
 
 DRONE_KEYWORDS = [
     "drone", "uav", "uas", "unmanned", "rpas", "bvlos", "urban air",

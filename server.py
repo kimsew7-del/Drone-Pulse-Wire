@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -10,7 +11,22 @@ from urllib.parse import urlparse
 from backend.news_service import NewsService
 
 
-BASE_DIR = Path(__file__).resolve().parent
+def _get_base_dir() -> Path:
+    """PyInstaller 번들 또는 일반 실행 환경 모두 지원."""
+    if getattr(sys, "frozen", False):
+        # PyInstaller --onefile: 임시 폴더에 풀린 리소스 경로
+        return Path(sys._MEIPASS)
+    return Path(__file__).resolve().parent
+
+
+def _get_data_dir() -> Path:
+    """data/ 는 번들 시 exe 옆에 두어 런타임 쓰기 가능하게."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "data"
+    return Path(__file__).resolve().parent / "data"
+
+
+BASE_DIR = _get_base_dir()
 
 
 def load_dotenv(base_dir: Path):
@@ -27,11 +43,13 @@ def load_dotenv(base_dir: Path):
         os.environ.setdefault(key, value)
 
 
-load_dotenv(BASE_DIR)
+# .env는 exe 옆 (또는 프로젝트 루트)에서 로드
+_exe_dir = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else BASE_DIR
+load_dotenv(_exe_dir)
 
 
 class NewsRequestHandler(SimpleHTTPRequestHandler):
-    service = NewsService(BASE_DIR)
+    service = NewsService(BASE_DIR, data_dir=_get_data_dir())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -129,7 +147,7 @@ def main():
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8080"))
     server = ThreadingHTTPServer((host, port), NewsRequestHandler)
-    print(f"Drone Pulse Wire server listening on http://{host}:{port}")
+    print(f"Briefwave server listening on http://{host}:{port}")
     server.serve_forever()
 
 

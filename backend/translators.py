@@ -152,7 +152,7 @@ def translate_with_ollama(text: str, mode: str = "summary", model_override: str 
         headers={
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
         },
         method="POST",
     )
@@ -181,7 +181,7 @@ def translate_with_papago(text: str) -> str | None:
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
             "X-NCP-APIGW-API-KEY-ID": client_id,
             "X-NCP-APIGW-API-KEY": client_secret,
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
         },
         method="POST",
     )
@@ -217,7 +217,7 @@ def translate_with_libretranslate(text: str) -> str | None:
         headers={
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
-            "User-Agent": "DronePulseWire/0.1 (+https://localhost)",
+            "User-Agent": "Briefwave/0.1 (+https://localhost)",
         },
         method="POST",
     )
