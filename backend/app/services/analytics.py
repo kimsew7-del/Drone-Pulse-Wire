@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from backend.models import (
+from app.services.domain import (
     CATEGORY_STOP_WORDS,
     REPORT_SOURCE_IDS,
     RESEARCH_SOURCES,
@@ -17,7 +17,7 @@ from backend.models import (
 )
 
 
-# ── Tokenization ──────────────────────────────────────────────
+# -- Tokenization ------------------------------------------------------
 
 
 def tokenize_text(text: str) -> list[str]:
@@ -75,7 +75,7 @@ def build_corpus_vocabulary(
     return ranked[:40]
 
 
-# ── Category discovery ────────────────────────────────────────
+# -- Category discovery ------------------------------------------------
 
 
 def discover_categories(
@@ -166,7 +166,6 @@ def assign_auto_categories(
     items: list[NewsItem],
     categories: list[dict[str, Any]],
 ) -> None:
-    """카테고리 결과를 아이템의 auto_categories 필드에 반영."""
     for cat in categories:
         label = cat["label"]
         article_ids = set(cat.get("article_ids", []))
@@ -220,7 +219,7 @@ def build_category_snapshot(
     )[-14:]
 
 
-# ── Trend snapshots ───────────────────────────────────────────
+# -- Trend snapshots ---------------------------------------------------
 
 
 def classify_content_type_for_trend(item: NewsItem, sources: list[dict[str, Any]]) -> str:
@@ -278,7 +277,7 @@ def capture_trend_snapshot(
     trend_history[:] = sorted(trend_history, key=lambda entry: entry.get("date", ""))[-14:]
 
 
-# ── Signals ───────────────────────────────────────────────────
+# -- Signals -----------------------------------------------------------
 
 
 def build_signals(
@@ -319,7 +318,7 @@ def build_signals(
     ]
 
 
-# ── Duplicate handling ────────────────────────────────────────
+# -- Duplicate handling ------------------------------------------------
 
 
 def is_duplicate(left: NewsItem, right: NewsItem) -> bool:
@@ -384,17 +383,14 @@ def rebuild_duplicates(news: list[NewsItem]) -> None:
 
         matched_idx: int | None = None
 
-        # 빠른 경로: URL 일치
         if item.url in url_to_group:
             matched_idx = url_to_group[item.url]
 
-        # 빠른 경로: canonical_key 일치
         if matched_idx is None and item.canonical_key:
             tokens = set(item.canonical_key.split())
             if len(tokens) >= 3 and item.canonical_key in key_to_group:
                 matched_idx = key_to_group[item.canonical_key]
 
-            # 토큰 역인덱스로 후보 그룹만 검사 (퍼지 매칭)
             if matched_idx is None and len(tokens) >= 3:
                 candidate_idxs: set[int] = set()
                 for tok in tokens:
@@ -446,7 +442,7 @@ def rebuild_duplicates(news: list[NewsItem]) -> None:
             item.duplicate_group = group_id
 
 
-# ── Merge & prune ─────────────────────────────────────────────
+# -- Merge & prune -----------------------------------------------------
 
 
 def merge_news(
@@ -481,7 +477,7 @@ def prune_irrelevant_news(
     news: list[NewsItem],
     sources: list[dict[str, Any]],
 ) -> None:
-    from backend.fetchers import passes_focus_relevance, source_item_is_relevant
+    from app.services.fetchers import passes_focus_relevance, source_item_is_relevant
 
     source_rules = {source["id"]: source for source in sources}
     filtered = []

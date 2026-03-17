@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
 
-from backend.models import (
+from app.services.domain import (
     DRONE_RELEVANCE_TERMS,
     PHYSICAL_AI_RELEVANCE_TERMS,
     RESEARCH_RELEVANCE_TERMS,
@@ -27,7 +27,7 @@ from backend.models import (
 )
 
 
-# ── Helpers ───────────────────────────────────────────────────
+# -- Helpers -----------------------------------------------------------
 
 
 def fetch_json(base_url: str, params: dict[str, str]) -> dict[str, Any]:
@@ -88,7 +88,7 @@ def record_source_stat(
     }
 
 
-# ── Per-source fetchers ──────────────────────────────────────
+# -- Per-source fetchers -----------------------------------------------
 
 
 def fetch_rss_source(source: dict[str, Any], sources: list[dict[str, Any]]) -> list[NewsItem]:
@@ -311,8 +311,7 @@ def fetch_kci_source(source: dict[str, Any], sources: list[dict[str, Any]]) -> l
     return items
 
 
-# ── Dispatcher ────────────────────────────────────────────────
-
+# -- Dispatcher --------------------------------------------------------
 _FETCHER_MAP = {
     "rss": fetch_rss_source,
     "newsapi": fetch_newsapi_source,

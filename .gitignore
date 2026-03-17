@@ -1,6 +1,19 @@
+# Environment
 .env
+
+# Backend
 __pycache__/
 *.pyc
+backend/data/briefwave.db
+
+# Data
 data/runtime_state.json
 data/discovered_sources.json
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# IDE
 .claude/

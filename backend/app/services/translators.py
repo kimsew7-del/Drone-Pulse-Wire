@@ -9,12 +9,12 @@ from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from backend.models import NewsItem
+from app.services.domain import NewsItem
 
 logger = logging.getLogger(__name__)
 
 
-# ── Module-level cache ────────────────────────────────────────
+# -- Module-level cache ------------------------------------------------
 
 _topic_translation_cache: dict[str, str] = {}
 
@@ -25,7 +25,7 @@ _LANG_MAP = {
 }
 
 
-# ── Detection ─────────────────────────────────────────────────
+# -- Detection ---------------------------------------------------------
 
 
 def looks_korean(text: str) -> bool:
@@ -45,7 +45,7 @@ def translation_enabled() -> bool:
     return has_ollama or has_papago or has_libre
 
 
-# ── Validation / cleaning ────────────────────────────────────
+# -- Validation / cleaning --------------------------------------------
 
 
 def is_valid_translation(translated: str, original: str) -> bool:
@@ -97,7 +97,7 @@ def clean_translation(text: str, mode: str) -> str:
     return cleaned.strip()
 
 
-# ── Engine: Ollama ────────────────────────────────────────────
+# -- Engine: Ollama ----------------------------------------------------
 
 
 def translate_with_ollama(text: str, mode: str = "summary", model_override: str | None = None) -> str | None:
@@ -168,7 +168,7 @@ def translate_with_ollama(text: str, mode: str = "summary", model_override: str 
     return body.get("message", {}).get("content", "").strip() or None
 
 
-# ── Engine: Papago ────────────────────────────────────────────
+# -- Engine: Papago ----------------------------------------------------
 
 
 def translate_with_papago(text: str) -> str | None:
@@ -198,7 +198,7 @@ def translate_with_papago(text: str) -> str | None:
     return payload.get("message", {}).get("result", {}).get("translatedText")
 
 
-# ── Engine: LibreTranslate ────────────────────────────────────
+# -- Engine: LibreTranslate -------------------------------------------
 
 
 def translate_with_libretranslate(text: str) -> str | None:
@@ -235,7 +235,7 @@ def translate_with_libretranslate(text: str) -> str | None:
     return payload.get("translatedText")
 
 
-# ── High-level translation ────────────────────────────────────
+# -- High-level translation --------------------------------------------
 
 
 def translate_text_to_korean(
@@ -292,7 +292,7 @@ def apply_korean_translation(
     item.translated_to_ko = bool(item.translated_headline or item.translated_summary)
 
 
-# ── Topic translation (Google Translate free API) ─────────────
+# -- Topic translation (Google Translate free API) ---------------------
 
 
 def translate_topic(text: str, lang_code: str) -> str:
@@ -325,7 +325,7 @@ def translate_topic(text: str, lang_code: str) -> str:
             _topic_translation_cache[cache_key] = translated
             return translated
     except Exception:
-        logger.debug("GTX 주제 번역 실패 (%s→%s): %s", "ko", target, text[:30], exc_info=True)
+        logger.debug("GTX 주제 번역 실패 (%s->%s): %s", "ko", target, text[:30], exc_info=True)
 
     translated = translate_with_papago(text)
     if translated and translated != text:
@@ -365,7 +365,7 @@ def translate_to_korean_gtx(text: str) -> str:
     return text
 
 
-# ── Compare translations (all engines) ────────────────────────
+# -- Compare translations (all engines) --------------------------------
 
 
 def compare_translations(text: str, mode: str = "headline") -> dict[str, Any]:

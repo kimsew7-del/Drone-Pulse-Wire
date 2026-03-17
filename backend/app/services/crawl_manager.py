@@ -4,16 +4,18 @@ import json
 import logging
 import os
 import re
-import threading
 import time as _time
 import xml.etree.ElementTree as ET
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import urlencode, quote_plus, unquote, urlparse
+from urllib.parse import quote_plus, unquote, urlparse
 from urllib.request import Request, urlopen
 
-from backend.models import (
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from app.services.domain import (
     NewsItem,
     classify_doc_type,
     normalize_article,
@@ -22,26 +24,24 @@ from backend.models import (
     parse_iso_datetime,
     strip_html,
 )
-from backend.fetchers import collect_from_sources, fetch_json
-from backend.translators import looks_korean, translate_to_korean_gtx, translate_topic
+from app.services.fetchers import collect_from_sources, fetch_json
+from app.services.translators import looks_korean, translate_to_korean_gtx, translate_topic
+from app.services.source_crawler import REGION_SEEDS, crawl_seed
+from app.services.analytics import merge_news
 
 logger = logging.getLogger(__name__)
 
 
 def _build_topic_keywords(topic: str, topic_en: str | None = None) -> list[str]:
-    """주제에서 관련성 체크용 키워드 목록 생성."""
     raw = topic
     if topic_en and topic_en != topic:
         raw = f"{topic} {topic_en}"
-    # 단어 분리 (2자 이상)
     keywords = [w.strip().lower() for w in re.split(r"[\s,+/]+", raw) if len(w.strip()) >= 2]
-    # OR, AND 같은 검색 연산자 제거
     noise = {"or", "and", "not", "the", "for", "report", "보고서", "백서", "통계", "정책", "filetype:pdf"}
     return [kw for kw in keywords if kw not in noise]
 
 
 def _topic_relevant(keywords: list[str], headline: str, summary: str) -> bool:
-    """제목+요약에 주제 키워드가 하나라도 포함되어 있는지 확인."""
     if not keywords:
         return True
     text = f"{headline} {summary}".lower()
@@ -49,8 +49,15 @@ def _topic_relevant(keywords: list[str], headline: str, summary: str) -> bool:
 
 
 class CrawlManager:
-    def __init__(self, service: Any) -> None:
-        self._svc = service
+    """Manages background crawl jobs. Ephemeral state kept in memory.
+
+    Instead of holding a reference to the old NewsService, it receives
+    an async_sessionmaker and helper callables that know how to read/write
+    the DB.
+    """
+
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._session_factory = session_factory
         self.crawl_job: dict[str, Any] = self._make_idle_job()
 
     @staticmethod
@@ -75,22 +82,95 @@ class CrawlManager:
         self.crawl_job = self._make_idle_job()
         return dict(self.crawl_job)
 
-    def clear_reports(self) -> dict[str, Any]:
-        svc = self._svc
-        with svc.lock:
-            before = len(svc.news)
-            svc.news = [item for item in svc.news if item.content_type != "report"]
-            removed = before - len(svc.news)
-            svc._do_persist()
-            return {"removed": removed, "remaining": len(svc.news)}
+    async def clear_reports(self) -> dict[str, Any]:
+        from app.models import NewsItem as ORMNewsItem
 
-    # ── Region crawl ──────────────────────────────────────────
+        async with self._session_factory() as db:
+            result = await db.execute(
+                select(ORMNewsItem).where(ORMNewsItem.content_type == "report")
+            )
+            report_rows = result.scalars().all()
+            removed = len(report_rows)
+            for row in report_rows:
+                await db.delete(row)
+            await db.commit()
+
+            result2 = await db.execute(select(ORMNewsItem))
+            remaining = len(result2.scalars().all())
+            return {"removed": removed, "remaining": remaining}
+
+    # -- Helpers to load sources/news from DB synchronously (from thread) --
+
+    def _load_sources_sync(self) -> list[dict[str, Any]]:
+        """Synchronous helper to load sources from DB (called from background thread)."""
+        import asyncio
+        from app.models import Source as ORMSource
+
+        async def _load():
+            async with self._session_factory() as db:
+                result = await db.execute(select(ORMSource))
+                rows = result.scalars().all()
+                sources = []
+                for r in rows:
+                    sources.append({
+                        "id": r.id,
+                        "name": r.name,
+                        "type": r.type,
+                        "url": r.url,
+                        "query": r.query,
+                        "language": r.language,
+                        "page_size": r.page_size,
+                        "env_key": r.env_key,
+                        "must_contain_any": r.must_contain_any_list,
+                        "content_class": r.content_class,
+                    })
+                return sources
+
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_load())
+        finally:
+            loop.close()
+
+    def _load_news_as_domain_items_sync(self) -> list[NewsItem]:
+        """Load all news items from DB as domain NewsItem dataclasses (sync)."""
+        import asyncio
+        from app.models import NewsItem as ORMNewsItem
+
+        async def _load():
+            async with self._session_factory() as db:
+                result = await db.execute(select(ORMNewsItem))
+                rows = result.scalars().all()
+                return [_orm_to_domain(r) for r in rows]
+
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_load())
+        finally:
+            loop.close()
+
+    def _persist_news_sync(self, news: list[NewsItem], source_stats: dict[str, dict[str, Any]]) -> None:
+        """Persist domain NewsItem list and source stats to DB (sync wrapper)."""
+        import asyncio
+
+        async def _persist():
+            from app.services.news_service import persist_domain_items_to_db, persist_source_stats_to_db
+            async with self._session_factory() as db:
+                await persist_domain_items_to_db(db, news)
+                await persist_source_stats_to_db(db, source_stats)
+                await db.commit()
+
+        loop = asyncio.new_event_loop()
+        try:
+            loop.run_until_complete(_persist())
+        finally:
+            loop.close()
+
+    # -- Region crawl ------------------------------------------------------
 
     def start_crawl(self, regions: list[str] | None = None) -> dict[str, Any]:
         if self.crawl_job["status"] == "running":
             return {"error": "이미 크롤링이 진행 중입니다.", **self.crawl_job}
-
-        from backend.source_crawler import REGION_SEEDS
 
         target = regions or list(REGION_SEEDS.keys())
         total_seeds = sum(len(REGION_SEEDS.get(r, [])) for r in target)
@@ -108,6 +188,7 @@ class CrawlManager:
             "finished_at": None,
         }
 
+        import threading
         thread = threading.Thread(
             target=self._run_crawl_background,
             args=(target,),
@@ -117,26 +198,13 @@ class CrawlManager:
         return dict(self.crawl_job)
 
     def _run_crawl_background(self, regions: list[str]) -> None:
-        from backend.source_crawler import REGION_SEEDS, load_existing_sources, crawl_seed
-        from backend.persistence import merge_discovered_sources as merge_disc
-
-        svc = self._svc
         try:
-            existing_urls = load_existing_sources()
+            sources = self._load_sources_sync()
+            existing_urls = {s["url"] for s in sources}
+
             all_discovered: list[dict[str, Any]] = []
-
-            discovered_path = svc.data_dir / "discovered_sources.json"
-            if discovered_path.exists():
-                try:
-                    with discovered_path.open("r", encoding="utf-8") as f:
-                        all_discovered = json.load(f)
-                    existing_urls |= {
-                        s.get("url") for s in all_discovered if isinstance(s, dict)
-                    }
-                except Exception:
-                    logger.warning("discovered_sources.json 로드 실패", exc_info=True)
-
             progress = 0
+
             for region_key in regions:
                 seeds = REGION_SEEDS.get(region_key, [])
                 self.crawl_job["current_region"] = region_key
@@ -152,34 +220,32 @@ class CrawlManager:
                         self.crawl_job["discovered"] += len(found)
                         for item in found:
                             self.crawl_job["log"].append(
-                                f"[{region_key}] {item.get('name', '?')} — {item.get('url', '?')}"
+                                f"[{region_key}] {item.get('name', '?')} -- {item.get('url', '?')}"
                             )
                     except Exception as exc:
                         logger.warning("[%s] %s 크롤 실패: %s", region_key, seed["name"], exc, exc_info=True)
                         self.crawl_job["log"].append(
-                            f"[{region_key}] {seed['name']} — 오류: {exc}"
+                            f"[{region_key}] {seed['name']} -- 오류: {exc}"
                         )
 
-            svc.data_dir.mkdir(parents=True, exist_ok=True)
-            with discovered_path.open("w", encoding="utf-8") as f:
-                json.dump(all_discovered, f, ensure_ascii=False, indent=2)
+            # Register discovered sources in DB
+            new_sources = self._register_discovered_sources_sync(all_discovered)
+            self.crawl_job["log"].append(
+                f"소스 {new_sources}개 등록 완료, 뉴스 수집 시작..."
+            )
 
-            with svc.lock:
-                before = len(svc.sources)
-                merge_disc(svc.sources, svc.data_dir)
-                new_sources = len(svc.sources) - before
-                self.crawl_job["log"].append(
-                    f"소스 {new_sources}개 등록 완료, 뉴스 수집 시작..."
-                )
+            # Now collect news from all sources
+            sources = self._load_sources_sync()
+            source_stats: dict[str, dict[str, Any]] = {}
+            fetched = collect_from_sources(sources, source_stats)
+            news = self._load_news_as_domain_items_sync()
+            trend_history: list[dict[str, Any]] = []
 
-                fetched = collect_from_sources(svc.sources, svc.source_stats)
-                from backend.analytics import merge_news
-                added = merge_news(fetched, svc.news, svc.trend_history, svc.sources, svc._do_persist) if fetched else 0
-                self.crawl_job["log"].append(
-                    f"뉴스 수집 완료: {added}건 추가"
-                )
-                self.crawl_job["discovered"] += added
+            added = merge_news(fetched, news, trend_history, sources, lambda: None) if fetched else 0
+            self._persist_news_sync(news, source_stats)
 
+            self.crawl_job["log"].append(f"뉴스 수집 완료: {added}건 추가")
+            self.crawl_job["discovered"] += added
             self.crawl_job["status"] = "completed"
             self.crawl_job["finished_at"] = datetime.now(timezone.utc).isoformat()
             self.crawl_job["log"].append(
@@ -192,7 +258,50 @@ class CrawlManager:
             self.crawl_job["finished_at"] = datetime.now(timezone.utc).isoformat()
             self.crawl_job["log"].append(f"크롤링 오류: {exc}")
 
-    # ── Topic crawl ───────────────────────────────────────────
+    def _register_discovered_sources_sync(self, discovered: list[dict[str, Any]]) -> int:
+        """Register discovered sources into the DB. Returns count of newly added."""
+        import asyncio
+        from app.models import Source as ORMSource
+
+        async def _register():
+            async with self._session_factory() as db:
+                result = await db.execute(select(ORMSource))
+                existing = result.scalars().all()
+                known_ids = {s.id for s in existing}
+                known_urls = {s.url for s in existing}
+                count = 0
+                for item in discovered:
+                    if not isinstance(item, dict):
+                        continue
+                    if item.get("id") in known_ids or item.get("url") in known_urls:
+                        continue
+                    must_contain = item.get("must_contain_any", [])
+                    orm_source = ORMSource(
+                        id=item.get("id", f"src-discovered-{__import__('uuid').uuid4().hex[:8]}"),
+                        name=item.get("name", "Discovered Source"),
+                        type=item.get("type", "rss"),
+                        url=item.get("url", ""),
+                        query=item.get("query"),
+                        language=item.get("language"),
+                        page_size=item.get("page_size"),
+                        env_key=item.get("env_key"),
+                        content_class=item.get("content_class"),
+                    )
+                    orm_source.must_contain_any_list = must_contain if isinstance(must_contain, list) else []
+                    db.add(orm_source)
+                    known_ids.add(orm_source.id)
+                    known_urls.add(orm_source.url)
+                    count += 1
+                await db.commit()
+                return count
+
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(_register())
+        finally:
+            loop.close()
+
+    # -- Topic crawl -------------------------------------------------------
 
     def start_topic_crawl(self, topic: str) -> dict[str, Any]:
         if self.crawl_job["status"] == "running":
@@ -211,6 +320,7 @@ class CrawlManager:
             "finished_at": None,
         }
 
+        import threading
         thread = threading.Thread(
             target=self._run_topic_crawl_background,
             args=(topic,),
@@ -228,11 +338,9 @@ class CrawlManager:
     def _build_topic_steps(topic: str, topic_en: str) -> list[dict[str, Any]]:
         steps: list[dict[str, Any]] = []
 
-        # Phase 1: Crossref + Europe PMC
-        steps.append({"phase": "학술 검색", "label": f"Crossref — {topic_en}", "action": "crossref", "query": topic_en})
-        steps.append({"phase": "학술 검색", "label": f"Europe PMC — {topic_en}", "action": "europepmc", "query": topic_en})
+        steps.append({"phase": "학술 검색", "label": f"Crossref -- {topic_en}", "action": "crossref", "query": topic_en})
+        steps.append({"phase": "학술 검색", "label": f"Europe PMC -- {topic_en}", "action": "europepmc", "query": topic_en})
 
-        # Phase 2: DuckDuckGo
         ddg_queries = [
             {"label": "영어 리포트", "query": f"{topic_en} report OR whitepaper OR regulation"},
             {"label": "영어 PDF", "query": f"{topic_en} filetype:pdf report"},
@@ -241,14 +349,14 @@ class CrawlManager:
             {"label": "캐나다", "query": f"{topic_en} Transport Canada OR DRDC Canada report"},
             {"label": "유럽 기관", "query": f"{topic_en} EASA OR EU Commission OR Eurocontrol report"},
             {"label": "영국", "query": f"{topic_en} UK CAA OR UK MOD OR DSTL report"},
-            {"label": "독일·프랑스", "query": f"{topic_en} DLR OR Bundeswehr OR ONERA OR DGA report"},
+            {"label": "독일/프랑스", "query": f"{topic_en} DLR OR Bundeswehr OR ONERA OR DGA report"},
             {"label": "일본 기관", "query": f"{translate_topic(topic, 'ja')} 防衛省 OR JAXA OR 国土交通省"},
             {"label": "중국 기관", "query": f"{translate_topic(topic, 'zh')} 中国民航局 OR 国防部 OR 工信部 报告"},
             {"label": "인도", "query": f"{topic_en} DGCA India OR DRDO OR ISRO report"},
-            {"label": "싱가포르·ASEAN", "query": f"{topic_en} CAAS Singapore OR ASEAN report"},
+            {"label": "싱가포르/ASEAN", "query": f"{topic_en} CAAS Singapore OR ASEAN report"},
             {"label": "중동", "query": f"{topic_en} UAE GCAA OR Saudi GACA OR Israel IAA report"},
             {"label": "아프리카", "query": f"{topic_en} African Union OR SACAA OR Kenya KCAA report"},
-            {"label": "호주·뉴질랜드", "query": f"{topic_en} CASA Australia OR CAA New Zealand report"},
+            {"label": "호주/뉴질랜드", "query": f"{topic_en} CASA Australia OR CAA New Zealand report"},
             {"label": "중남미", "query": f"{topic_en} ANAC Brazil OR DGAC Mexico report"},
             {"label": "국제기구", "query": f"{topic_en} ICAO OR OECD OR NATO OR UN OR ITU report"},
             {"label": "싱크탱크", "query": f"{topic_en} RAND OR Brookings OR Carnegie OR CSIS OR IISS analysis"},
@@ -256,7 +364,7 @@ class CrawlManager:
             {"label": "한국 정부", "query": f"{topic} 국방부 OR 국토부 OR 과기부 OR 방사청 OR 산업부 보고서"},
             {"label": "한국 연구기관", "query": f"{topic} KARI OR KIST OR ADD OR 항공우주연구원 보고서"},
         ]
-        for lang_code, label in [("ja","일본어"),("zh-CN","중국어"),("de","독일어"),("fr","프랑스어"),("ru","러시아어"),("ar","아랍어")]:
+        for lang_code, label in [("ja", "일본어"), ("zh-CN", "중국어"), ("de", "독일어"), ("fr", "프랑스어"), ("ru", "러시아어"), ("ar", "아랍어")]:
             translated = translate_topic(topic, lang_code.split("-")[0])
             if translated != topic:
                 ddg_queries.append({"label": f"{label} ({translated[:20]})", "query": f"{translated} report"})
@@ -264,7 +372,6 @@ class CrawlManager:
         for qinfo in ddg_queries:
             steps.append({"phase": "웹 검색", "label": qinfo["label"], "action": "ddg", "query": qinfo["query"]})
 
-        # Phase 3: Google News
         gnews_langs = [
             {"hl": "en", "gl": "US", "ceid": "US:en", "label": "영어 뉴스"},
             {"hl": "ko", "gl": "KR", "ceid": "KR:ko", "label": "한국어 뉴스"},
@@ -277,10 +384,9 @@ class CrawlManager:
 
         return steps
 
-    # ── Stats crawl ─────────────────────────────────────────
+    # -- Stats crawl -------------------------------------------------------
 
     def start_stats_crawl(self, topic: str) -> dict[str, Any]:
-        """통계/차트/데이터 전용 크롤."""
         if self.crawl_job["status"] == "running":
             return {"error": "이미 크롤링이 진행 중입니다.", **self.crawl_job}
 
@@ -297,6 +403,7 @@ class CrawlManager:
             "finished_at": None,
         }
 
+        import threading
         thread = threading.Thread(
             target=self._run_stats_crawl_background,
             args=(topic,),
@@ -318,7 +425,6 @@ class CrawlManager:
     def _build_stats_steps(topic: str, topic_en: str) -> list[dict[str, Any]]:
         steps: list[dict[str, Any]] = []
 
-        # DuckDuckGo: 통계·데이터 특화 쿼리
         ddg_queries = [
             {"label": "영어 통계", "query": f"{topic_en} statistics 2024 2025 data"},
             {"label": "시장 규모", "query": f"{topic_en} market size market share forecast"},
@@ -344,15 +450,13 @@ class CrawlManager:
         for qinfo in ddg_queries:
             steps.append({"phase": "통계 검색", "label": qinfo["label"], "action": "ddg", "query": qinfo["query"]})
 
-        # Crossref: 통계 논문
         steps.append({
             "phase": "학술 통계",
-            "label": f"Crossref — {topic_en} statistics",
+            "label": f"Crossref -- {topic_en} statistics",
             "action": "crossref",
             "query": f"{topic_en} statistics data survey",
         })
 
-        # Google News: 통계 관련 뉴스
         gnews_langs = [
             {"hl": "en", "gl": "US", "ceid": "US:en", "label": "영어 통계 뉴스"},
             {"hl": "ko", "gl": "KR", "ceid": "KR:ko", "label": "한국 통계 뉴스"},
@@ -365,7 +469,7 @@ class CrawlManager:
 
         return steps
 
-    # ── Shared step-based crawl pipeline ─────────────────────
+    # -- Shared step-based crawl pipeline ----------------------------------
 
     def _run_step_crawl_pipeline(
         self,
@@ -376,12 +480,13 @@ class CrawlManager:
         doc_type_override: str | None = None,
         crawl_label: str = "주제",
     ) -> None:
-        """topic/stats 크롤의 공통 실행 파이프라인."""
-        svc = self._svc
         try:
+            sources = self._load_sources_sync()
+            news = self._load_news_as_domain_items_sync()
+
             collected_items: list[NewsItem] = []
             known_urls: set[str] = {
-                item.url for item in svc.news if item.content_type != "report"
+                item.url for item in news if item.content_type != "report"
             }
 
             relevance_keywords = _build_topic_keywords(topic, topic_en)
@@ -394,9 +499,8 @@ class CrawlManager:
                 self.crawl_job["current_seed"] = step["label"]
 
                 try:
-                    items = self._execute_step(step, topic, known_urls, doc_type_override)
+                    items = self._execute_step(step, topic, known_urls, doc_type_override, sources)
 
-                    # 주제 관련성 필터
                     before = len(items)
                     items = [it for it in items if _topic_relevant(relevance_keywords, it.headline, it.summary)]
                     filtered_out = before - len(items)
@@ -405,29 +509,31 @@ class CrawlManager:
                     for it in items:
                         known_urls.add(it.url)
 
-                    log_msg = f"[{step['phase']}] {step['label']} — {len(items)}건"
+                    log_msg = f"[{step['phase']}] {step['label']} -- {len(items)}건"
                     if filtered_out:
                         log_msg += f" (관련성 미달 {filtered_out}건 제외)"
                     self.crawl_job["log"].append(log_msg)
                 except Exception as exc:
                     logger.warning("[%s] %s 실패: %s", step["phase"], step["label"], exc, exc_info=True)
                     self.crawl_job["log"].append(
-                        f"[{step['phase']}] {step['label']} — 오류: {exc}"
+                        f"[{step['phase']}] {step['label']} -- 오류: {exc}"
                     )
 
             # Translation
             self._translate_collected_items(collected_items)
 
             # Merge
-            with svc.lock:
-                from backend.analytics import merge_news
-                added = merge_news(collected_items, svc.news, svc.trend_history, svc.sources, svc._do_persist) if collected_items else 0
-                self.crawl_job["discovered"] = added
+            trend_history: list[dict[str, Any]] = []
+            added = merge_news(collected_items, news, trend_history, sources, lambda: None) if collected_items else 0
 
+            source_stats: dict[str, dict[str, Any]] = {}
+            self._persist_news_sync(news, source_stats)
+
+            self.crawl_job["discovered"] = added
             self.crawl_job["status"] = "completed"
             self.crawl_job["finished_at"] = datetime.now(timezone.utc).isoformat()
             self.crawl_job["log"].append(
-                f"완료: \"{topic}\" {crawl_label} — {added}건 추가 (수집 {len(collected_items)}건 중)"
+                f"완료: \"{topic}\" {crawl_label} -- {added}건 추가 (수집 {len(collected_items)}건 중)"
             )
 
         except Exception as exc:
@@ -442,22 +548,22 @@ class CrawlManager:
         topic: str,
         known_urls: set[str],
         doc_type_override: str | None,
+        sources: list[dict[str, Any]],
     ) -> list[NewsItem]:
-        """단일 스텝 실행 후 아이템 목록 반환."""
         items: list[NewsItem] = []
 
         if step["action"] == "crossref":
-            items = self._topic_search_crossref(step["query"], known_urls)
+            items = self._topic_search_crossref(step["query"], known_urls, sources)
             if doc_type_override:
                 for it in items:
                     it.doc_type = doc_type_override
 
         elif step["action"] == "europepmc":
-            items = self._topic_search_europepmc(step["query"], known_urls)
+            items = self._topic_search_europepmc(step["query"], known_urls, sources)
 
         elif step["action"] == "ddg":
             _time.sleep(0.5)
-            items = self._search_duckduckgo(step["query"], topic, known_urls)
+            items = self._search_duckduckgo(step["query"], topic, known_urls, sources)
             if doc_type_override:
                 for it in items:
                     if it.doc_type == "뉴스":
@@ -473,7 +579,7 @@ class CrawlManager:
                 f"https://news.google.com/rss/search?q={query}"
                 f"&hl={lang['hl']}&gl={lang['gl']}&ceid={lang['ceid']}"
             )
-            items = self._fetch_google_rss_items(rss_url, topic, known_urls)
+            items = self._fetch_google_rss_items(rss_url, topic, known_urls, sources)
             if doc_type_override:
                 for it in items:
                     if it.doc_type == "뉴스":
@@ -482,7 +588,6 @@ class CrawlManager:
         return items
 
     def _translate_collected_items(self, collected_items: list[NewsItem]) -> None:
-        """수집된 아이템 중 비한국어 제목을 병렬 번역."""
         need_translate = [
             item for item in collected_items
             if not looks_korean(item.headline)
@@ -514,9 +619,9 @@ class CrawlManager:
 
         self.crawl_job["log"].append(f"[번역] {translated_count}/{len(need_translate)}건 한글 번역 완료")
 
-    # ── Search helpers ────────────────────────────────────────
+    # -- Search helpers ----------------------------------------------------
 
-    def _topic_search_crossref(self, query: str, known_urls: set[str]) -> list[NewsItem]:
+    def _topic_search_crossref(self, query: str, known_urls: set[str], sources: list[dict[str, Any]]) -> list[NewsItem]:
         params = {
             "rows": "15",
             "query.title": query,
@@ -543,7 +648,7 @@ class CrawlManager:
                 source_name=journal,
                 source_id="topic-crossref",
                 url=url,
-                sources=self._svc.sources,
+                sources=sources,
                 published_at=parse_crossref_date(article.get("published")),
             )
             item.content_type = "report"
@@ -551,7 +656,7 @@ class CrawlManager:
             items.append(item)
         return items
 
-    def _topic_search_europepmc(self, query: str, known_urls: set[str]) -> list[NewsItem]:
+    def _topic_search_europepmc(self, query: str, known_urls: set[str], sources: list[dict[str, Any]]) -> list[NewsItem]:
         params = {
             "query": f"{query} sort_date:y",
             "pageSize": "15",
@@ -576,7 +681,7 @@ class CrawlManager:
                 source_name=journal,
                 source_id="topic-europepmc",
                 url=url,
-                sources=self._svc.sources,
+                sources=sources,
                 published_at=parse_iso_datetime(article.get("firstPublicationDate")),
             )
             item.content_type = "report"
@@ -591,8 +696,6 @@ class CrawlManager:
 
     @classmethod
     def _parse_snippet_date(cls, text: str) -> datetime | None:
-        """DuckDuckGo 스니펫에서 날짜 추출 시도."""
-        # "Jan 15, 2025", "March 3, 2024"
         m = re.search(
             r"\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{1,2}),?\s+(\d{4})",
             text, re.IGNORECASE,
@@ -604,7 +707,6 @@ class CrawlManager:
                     return datetime(int(m.group(3)), month, int(m.group(2)), tzinfo=timezone.utc)
                 except ValueError:
                     pass
-        # "15 Jan 2025", "3 March 2024"
         m = re.search(
             r"\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{4})",
             text, re.IGNORECASE,
@@ -616,14 +718,12 @@ class CrawlManager:
                     return datetime(int(m.group(3)), month, int(m.group(1)), tzinfo=timezone.utc)
                 except ValueError:
                     pass
-        # "2024-06-01", "2024/06/01", "2024.06.01"
         m = re.search(r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})", text)
         if m:
             try:
                 return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), tzinfo=timezone.utc)
             except ValueError:
                 pass
-        # "2025년 3월 5일"
         m = re.search(r"(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일", text)
         if m:
             try:
@@ -633,7 +733,7 @@ class CrawlManager:
         return None
 
     def _search_duckduckgo(
-        self, query: str, topic: str, known_urls: set[str]
+        self, query: str, topic: str, known_urls: set[str], sources: list[dict[str, Any]]
     ) -> list[NewsItem]:
         encoded_q = quote_plus(query)
         search_url = f"https://html.duckduckgo.com/html/?q={encoded_q}"
@@ -647,12 +747,10 @@ class CrawlManager:
         with urlopen(request, timeout=15) as resp:
             raw_html = resp.read().decode("utf-8", errors="replace")
 
-        # 결과 블록 단위로 파싱: 링크 + 스니펫
         results = re.findall(
             r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>',
             raw_html, re.DOTALL,
         )
-        # 스니펫: <a class="result__snippet" ...>text</a>
         snippets = re.findall(
             r'<a[^>]+class="result__snippet"[^>]*>(.*?)</a>',
             raw_html, re.DOTALL,
@@ -669,7 +767,6 @@ class CrawlManager:
             if not title or len(title) < 5:
                 continue
 
-            # 스니펫에서 요약 + 날짜 추출
             snippet_text = strip_html(snippets[idx]) if idx < len(snippets) else ""
             snippet_date = self._parse_snippet_date(f"{title} {snippet_text}")
 
@@ -682,7 +779,7 @@ class CrawlManager:
                 source_name=source_name,
                 source_id=f"topic-{topic[:20]}",
                 url=real_url,
-                sources=self._svc.sources,
+                sources=sources,
                 published_at=snippet_date,
             )
             item.content_type = "report"
@@ -692,7 +789,7 @@ class CrawlManager:
         return items
 
     def _fetch_google_rss_items(
-        self, rss_url: str, topic: str, known_urls: set[str]
+        self, rss_url: str, topic: str, known_urls: set[str], sources: list[dict[str, Any]]
     ) -> list[NewsItem]:
         request = Request(
             rss_url,
@@ -732,7 +829,7 @@ class CrawlManager:
                 source_name=source_name,
                 source_id=f"topic-{topic[:20]}",
                 url=link,
-                sources=self._svc.sources,
+                sources=sources,
                 published_at=parse_date(node.findtext("pubDate")),
             )
             item.content_type = "report"
@@ -740,3 +837,51 @@ class CrawlManager:
             items.append(item)
 
         return items
+
+
+# -- Conversion helpers ------------------------------------------------
+
+
+def _orm_to_domain(row: Any) -> NewsItem:
+    """Convert an ORM NewsItem row to a domain NewsItem dataclass."""
+    import json as _json
+    return NewsItem(
+        id=row.id,
+        topic=row.topic,
+        region=row.region,
+        headline=row.headline,
+        summary=row.summary,
+        highlights=_safe_json_list(row.highlights),
+        source=row.source,
+        impact=row.impact,
+        timestamp=row.timestamp,
+        url=row.url,
+        status=row.status or "queued",
+        duplicate_group=row.duplicate_group,
+        related_sources=_safe_json_list(row.related_sources),
+        duplicate_count=row.duplicate_count or 0,
+        canonical_key=row.canonical_key or "",
+        merged_summary=row.merged_summary,
+        related_articles=_safe_json_list(row.related_articles),
+        editor_note=row.editor_note or "",
+        source_id=row.source_id or "",
+        translated_headline=row.translated_headline or "",
+        translated_summary=row.translated_summary or "",
+        translated_to_ko=bool(row.translated_to_ko),
+        auto_categories=_safe_json_list(row.auto_categories),
+        content_type=row.content_type or "news",
+        doc_type=row.doc_type or "",
+    )
+
+
+def _safe_json_list(val: Any) -> list:
+    if isinstance(val, list):
+        return val
+    if not val:
+        return []
+    try:
+        import json as _json
+        parsed = _json.loads(val)
+        return parsed if isinstance(parsed, list) else []
+    except (json.JSONDecodeError, TypeError):
+        return []

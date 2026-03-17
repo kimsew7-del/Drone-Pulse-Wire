@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
+import signal
 import sys
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -9,6 +11,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from backend.news_service import NewsService
+
+logger = logging.getLogger(__name__)
 
 
 def _get_base_dir() -> Path:
@@ -49,7 +53,12 @@ load_dotenv(_exe_dir)
 
 
 class NewsRequestHandler(SimpleHTTPRequestHandler):
-    service = NewsService(BASE_DIR, data_dir=_get_data_dir())
+    service: NewsService | None = None
+
+    @classmethod
+    def init_service(cls) -> None:
+        if cls.service is None:
+            cls.service = NewsService(BASE_DIR, data_dir=_get_data_dir())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE_DIR), **kwargs)
@@ -132,7 +141,10 @@ class NewsRequestHandler(SimpleHTTPRequestHandler):
         self.send_error(HTTPStatus.NOT_FOUND, "Unknown API endpoint")
 
     def log_message(self, format, *args):
-        return
+        pass
+
+    def log_error(self, format, *args):
+        logger.warning(format, *args)
 
     def _write_json(self, payload: dict):
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -144,11 +156,25 @@ class NewsRequestHandler(SimpleHTTPRequestHandler):
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+    )
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8080"))
+    NewsRequestHandler.init_service()
     server = ThreadingHTTPServer((host, port), NewsRequestHandler)
+
+    def _shutdown(signum, frame):
+        logger.info("종료 신호 수신 (signal=%s), 서버를 정상 종료합니다...", signum)
+        server.shutdown()
+
+    signal.signal(signal.SIGINT, _shutdown)
+    signal.signal(signal.SIGTERM, _shutdown)
+
     print(f"Briefwave server listening on http://{host}:{port}")
     server.serve_forever()
+    logger.info("서버 종료 완료.")
 
 
 if __name__ == "__main__":

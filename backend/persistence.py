@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import json
+import logging
+import os
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from backend.models import (
     NewsItem,
@@ -18,8 +23,16 @@ from backend.models import (
 
 
 def load_json(data_dir: Path, filename: str) -> list[dict[str, Any]]:
-    with (data_dir / filename).open("r", encoding="utf-8") as file:
-        payload = json.load(file)
+    filepath = data_dir / filename
+    if not filepath.exists():
+        logger.warning("파일 없음: %s (빈 목록 반환)", filepath)
+        return []
+    try:
+        with filepath.open("r", encoding="utf-8") as file:
+            payload = json.load(file)
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.error("파일 로드 실패: %s — %s", filepath, exc)
+        return []
     if filename == "sources.json":
         normalized = []
         for item in payload:
@@ -43,9 +56,28 @@ def load_json(data_dir: Path, filename: str) -> list[dict[str, Any]]:
     return payload
 
 
+def _atomic_json_write(filepath: Path, payload: Any) -> None:
+    """임시 파일에 쓴 뒤 os.replace()로 원자적 교체."""
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(filepath.parent),
+        suffix=".tmp",
+        prefix=filepath.stem,
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, str(filepath))
+    except BaseException:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
 def persist_sources(data_dir: Path, sources: list[dict[str, Any]]) -> None:
-    with (data_dir / "sources.json").open("w", encoding="utf-8") as file:
-        json.dump(sources, file, ensure_ascii=False, indent=2)
+    _atomic_json_write(data_dir / "sources.json", sources)
 
 
 def merge_discovered_sources(sources: list[dict[str, Any]], data_dir: Path) -> None:
@@ -158,6 +190,5 @@ def persist_state(
         "trend_history": trend_history,
         "category_snapshots": category_snapshots,
     }
-    with runtime_path.open("w", encoding="utf-8") as file:
-        json.dump(payload, file, ensure_ascii=False, indent=2)
+    _atomic_json_write(runtime_path, payload)
     return payload["saved_at"]

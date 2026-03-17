@@ -10,6 +10,7 @@ from backend.models import REPORT_SOURCE_IDS, NewsItem
 from backend.fetchers import collect_from_sources
 from backend.translators import apply_korean_translation, compare_translations
 from backend.analytics import (
+    assign_auto_categories,
     build_category_snapshot,
     build_signals,
     capture_trend_snapshot,
@@ -79,11 +80,13 @@ class NewsService:
 
     def get_payload(self) -> dict[str, Any]:
         with self.lock:
-            queued = [item for item in self._sorted_news() if item.status == "queued"]
-            published = [item for item in self._sorted_news() if item.status == "published"]
+            sorted_news = self._sorted_news()
+            queued = [item for item in sorted_news if item.status == "queued"]
+            published = [item for item in sorted_news if item.status == "published"]
             duplicate_hidden = [item for item in self.news if item.status == "duplicate_hidden"]
             visible = [item for item in self.news if item.status != "duplicate_hidden"]
             current_cats = discover_categories(visible, self.category_snapshots)
+            assign_auto_categories(visible, current_cats)
             report_items = [item for item in visible if item.content_type == "report"]
             report_sources = [s for s in self.sources if s.get("content_class") == "report" or s.get("id") in REPORT_SOURCE_IDS]
             return {
