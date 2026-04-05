@@ -1,34 +1,55 @@
 # Briefwave
 
-드론과 AI 관련 글로벌/한국 뉴스를 피드 형태로 자동 적재하고, 트렌드와 신기술 리포트를 함께 보여주는 앱입니다.
+Briefwave는 드론과 AI 분야의 글로벌 뉴스, 논문, 리포트를 자동으로 수집하고, 사용자의 관심 키워드에 맞춰 개인화된 인사이트 피드로 재구성하는 뉴스 인텔리전스 플랫폼입니다.
+
+## 핵심 가치
+
+- 자동 수집: 글로벌 뉴스, 연구 자료, 리포트를 하나의 흐름으로 통합
+- 개인화 피드: 키워드 구독 기반으로 사용자별 맞춤 뉴스 구성
+- AI 보조 분석: 요약, 번역, 카테고리 분류, 트렌드 해석 지원
+- 운영 가시성: 소스 상태와 수집 현황, 피드 통계를 함께 관리
+
+## 주요 기능
+
+- 사용자 로그인 및 JWT 기반 인증
+- 키워드 구독 생성, 수정, 삭제
+- 구독별 수동 크롤링 실행
+- 글로벌 뉴스/연구 소스 통합 수집
+- 번역 및 기사 메타데이터 보강
+- 개인화 피드와 피드 통계 제공
+- 소스 상태 및 모니터링 화면 제공
+
+## 프로젝트 구조
+
+- `frontend/`: Next.js 기반 사용자 인터페이스
+- `backend/`: FastAPI 기반 API 서버
+- `backend/data/`: SQLite 데이터 및 시드 파일
+- `docs/presskit/`: 프로젝트 소개 문안과 인포그래픽
 
 ## 실행
 
-```bash
-python3 server.py
-```
-
-더 간단히 실행하려면:
+### Frontend
 
 ```bash
-./run_local.sh
+cd frontend
+npm install
+npm run dev
 ```
 
-처음 실행 시 `.env`가 없으면 `.env.example` 기준으로 자동 생성합니다.
+### Backend
 
-기본 접속 주소:
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-- 메인 피드: `http://127.0.0.1:8080`
-- 소스 모니터: `http://127.0.0.1:8080/monitor.html`
+기본 개발 주소:
 
-## 현재 구성
-
-- `index.html`: 메인 피드
-- `monitor.html`: 소스 상태 모니터링 화면
-- `app.js`: 피드, 트렌드, 리포트, 카드 액션 렌더링
-- `monitor.js`: 소스 상태 전용 대시보드
-- `server.py`: 정적 파일 + API 서버
-- `backend/news_service.py`: 수집, 정규화, 중복 제거, 트렌드 스냅샷
+- Frontend: `http://127.0.0.1:3000`
+- Backend API: `http://127.0.0.1:8000`
 
 ## 수집 소스
 
@@ -109,15 +130,15 @@ PAPAGO_CLIENT_SECRET=your_client_secret
 ## API
 
 - `GET /api/news`
-- `POST /api/refresh`
+- `GET /api/feed`
+- `GET /api/feed/stats`
+- `GET /api/subscriptions`
+- `POST /api/subscriptions`
+- `PATCH /api/subscriptions/{sub_id}`
+- `DELETE /api/subscriptions/{sub_id}`
+- `POST /api/subscriptions/{sub_id}/crawl`
+- `POST /api/translate/{article_id}`
 - `GET /api/sources`
-
-`/api/news`에는 아래가 포함됩니다.
-
-- 기사 목록
-- 소스 상태
-- 라이브 시그널
-- 최근 트렌드 스냅샷 히스토리
 
 ## 배포
 
@@ -128,4 +149,9 @@ PAPAGO_CLIENT_SECRET=your_client_secret
 - `Caddyfile`
 - `DEPLOY.md`
 
-도메인 연결과 HTTPS 설정 절차는 [DEPLOY.md](/Users/daon/projects/Drone_news/DEPLOY.md)에 정리했습니다.
+도메인 연결과 HTTPS 설정 절차는 `DEPLOY.md`에 정리했습니다.
+
+## 소개 자료
+
+- 프로젝트 소개 문서: `docs/presskit/project_intro_ko.md`
+- 인포그래픽: `docs/presskit/briefwave_infographic.svg`
