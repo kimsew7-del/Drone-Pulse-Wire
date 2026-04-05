@@ -1,0 +1,120 @@
+<svg width="1600" height="2200" viewBox="0 0 1600 2200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="140" y1="80" x2="1460" y2="2140" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FBFF"/>
+      <stop offset="0.52" stop-color="#EDF7F7"/>
+      <stop offset="1" stop-color="#FFF8EE"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="120" y1="160" x2="1480" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F4C81"/>
+      <stop offset="0.5" stop-color="#177E89"/>
+      <stop offset="1" stop-color="#F28F3B"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F6FBFC"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1600" height="2200" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="20" stdDeviation="26" flood-color="#0E2A47" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="2200" rx="40" fill="url(#bg)"/>
+  <circle cx="1330" cy="250" r="220" fill="#D8F3F1" fill-opacity="0.8"/>
+  <circle cx="240" cy="1960" r="180" fill="#FFE7C9" fill-opacity="0.72"/>
+  <circle cx="1440" cy="1850" r="130" fill="#DDEBFF" fill-opacity="0.8"/>
+
+  <g filter="url(#shadow)">
+    <rect x="80" y="80" width="1440" height="470" rx="36" fill="url(#hero)"/>
+  </g>
+
+  <text x="140" y="170" fill="#DDF7FF" font-family="Pretendard, Inter, sans-serif" font-size="26" font-weight="700" letter-spacing="5">DRONE + AI NEWS INTELLIGENCE</text>
+  <text x="140" y="260" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="74" font-weight="800">Briefwave</text>
+  <text x="140" y="332" fill="#EFFBFF" font-family="Pretendard, Inter, sans-serif" font-size="34" font-weight="600">흩어진 드론·AI 정보를 개인화된 인사이트 피드로 재구성하는 플랫폼</text>
+
+  <rect x="140" y="390" width="320" height="94" rx="24" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="172" y="432" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="700">자동 수집</text>
+  <text x="172" y="464" fill="#EAFBFF" font-family="Pretendard, Inter, sans-serif" font-size="20">글로벌 뉴스·논문·리포트 통합</text>
+
+  <rect x="492" y="390" width="320" height="94" rx="24" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="524" y="432" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="700">개인화 피드</text>
+  <text x="524" y="464" fill="#EAFBFF" font-family="Pretendard, Inter, sans-serif" font-size="20">키워드 구독 기반 맞춤 구성</text>
+
+  <rect x="844" y="390" width="320" height="94" rx="24" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="876" y="432" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="700">AI 분석</text>
+  <text x="876" y="464" fill="#EAFBFF" font-family="Pretendard, Inter, sans-serif" font-size="20">분류·번역·트렌드 해석 지원</text>
+
+  <rect x="1196" y="390" width="220" height="94" rx="24" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="1228" y="432" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="700">운영 가시성</text>
+  <text x="1228" y="464" fill="#EAFBFF" font-family="Pretendard, Inter, sans-serif" font-size="20">소스 상태 모니터링</text>
+
+  <text x="120" y="650" fill="#103C63" font-family="Pretendard, Inter, sans-serif" font-size="46" font-weight="800">왜 필요한가</text>
+  <text x="120" y="705" fill="#47657D" font-family="Pretendard, Inter, sans-serif" font-size="24" font-weight="500">정보는 많지만, 의사결정에 바로 쓰기 어려운 환경을 정리합니다.</text>
+
+  <rect x="120" y="760" width="430" height="250" rx="30" fill="url(#card)" stroke="#D7E7F0" stroke-width="2"/>
+  <text x="160" y="835" fill="#113F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">문제 1</text>
+  <text x="160" y="890" fill="#294B62" font-family="Pretendard, Inter, sans-serif" font-size="34" font-weight="700">정보가 여러 소스에 분산</text>
+  <text x="160" y="940" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">뉴스, 학술자료, 리포트가 국가와 언어별로 흩어져 있어</text>
+  <text x="160" y="974" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">지속적으로 추적하는 비용이 큽니다.</text>
+
+  <rect x="585" y="760" width="430" height="250" rx="30" fill="url(#card)" stroke="#D7E7F0" stroke-width="2"/>
+  <text x="625" y="835" fill="#113F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">문제 2</text>
+  <text x="625" y="890" fill="#294B62" font-family="Pretendard, Inter, sans-serif" font-size="34" font-weight="700">중복 기사와 과잉 정보</text>
+  <text x="625" y="940" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">같은 이슈가 여러 매체에서 반복 보도되어</text>
+  <text x="625" y="974" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">핵심 변화만 빠르게 읽기 어렵습니다.</text>
+
+  <rect x="1050" y="760" width="430" height="250" rx="30" fill="url(#card)" stroke="#D7E7F0" stroke-width="2"/>
+  <text x="1090" y="835" fill="#113F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">문제 3</text>
+  <text x="1090" y="890" fill="#294B62" font-family="Pretendard, Inter, sans-serif" font-size="34" font-weight="700">개인화된 인사이트 부족</text>
+  <text x="1090" y="940" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">사용자가 관심 키워드만 모아서 보는 구조가 부족해</text>
+  <text x="1090" y="974" fill="#4C6677" font-family="Pretendard, Inter, sans-serif" font-size="23" font-weight="500">실무형 모니터링 워크플로가 끊깁니다.</text>
+
+  <text x="120" y="1135" fill="#103C63" font-family="Pretendard, Inter, sans-serif" font-size="46" font-weight="800">Briefwave가 작동하는 방식</text>
+
+  <line x1="250" y1="1298" x2="1350" y2="1298" stroke="#BED6E2" stroke-width="10" stroke-linecap="round"/>
+
+  <circle cx="250" cy="1298" r="70" fill="#0F4C81"/>
+  <text x="215" y="1310" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="42" font-weight="800">1</text>
+  <text x="160" y="1418" fill="#123F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">수집</text>
+  <text x="110" y="1460" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">RSS, 뉴스 API, 연구 DB에서</text>
+  <text x="112" y="1492" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">드론·AI 데이터를 자동 확보</text>
+
+  <circle cx="620" cy="1298" r="70" fill="#177E89"/>
+  <text x="585" y="1310" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="42" font-weight="800">2</text>
+  <text x="530" y="1418" fill="#123F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">정리</text>
+  <text x="474" y="1460" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">중복 제거, 카테고리 분류,</text>
+  <text x="490" y="1492" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">요약과 메타데이터 정돈</text>
+
+  <circle cx="990" cy="1298" r="70" fill="#F28F3B"/>
+  <text x="955" y="1310" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="42" font-weight="800">3</text>
+  <text x="885" y="1418" fill="#123F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">개인화</text>
+  <text x="820" y="1460" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">키워드 구독, 지역, 언어, 기간 기준으로</text>
+  <text x="840" y="1492" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">사용자별 피드를 재구성</text>
+
+  <circle cx="1350" cy="1298" r="70" fill="#8A5CF6"/>
+  <text x="1315" y="1310" fill="white" font-family="Pretendard, Inter, sans-serif" font-size="42" font-weight="800">4</text>
+  <text x="1278" y="1418" fill="#123F67" font-family="Pretendard, Inter, sans-serif" font-size="30" font-weight="800">활용</text>
+  <text x="1200" y="1460" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">번역, 트렌드, 피드 통계를 통해</text>
+  <text x="1228" y="1492" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">빠른 판단과 모니터링 지원</text>
+
+  <text x="120" y="1610" fill="#103C63" font-family="Pretendard, Inter, sans-serif" font-size="46" font-weight="800">핵심 기능</text>
+
+  <rect x="120" y="1660" width="660" height="150" rx="28" fill="#FFFFFF" stroke="#D6E5ED" stroke-width="2"/>
+  <text x="160" y="1720" fill="#0F4C81" font-family="Pretendard, Inter, sans-serif" font-size="28" font-weight="800">키워드 구독 기반 수집</text>
+  <text x="160" y="1764" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">사용자가 원하는 주제와 조건을 직접 설정하고 독립적인 피드를 운영</text>
+
+  <rect x="820" y="1660" width="660" height="150" rx="28" fill="#FFFFFF" stroke="#D6E5ED" stroke-width="2"/>
+  <text x="860" y="1720" fill="#177E89" font-family="Pretendard, Inter, sans-serif" font-size="28" font-weight="800">글로벌 뉴스 + 연구 정보 통합</text>
+  <text x="860" y="1764" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">언론 기사와 학술 자료를 같은 흐름에서 파악할 수 있는 구조</text>
+
+  <rect x="120" y="1845" width="660" height="150" rx="28" fill="#FFFFFF" stroke="#D6E5ED" stroke-width="2"/>
+  <text x="160" y="1905" fill="#F28F3B" font-family="Pretendard, Inter, sans-serif" font-size="28" font-weight="800">번역 · 요약 · 분류 지원</text>
+  <text x="160" y="1949" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">해외 정보도 한국어 중심으로 빠르게 읽고 핵심 신호를 압축</text>
+
+  <rect x="820" y="1845" width="660" height="150" rx="28" fill="#FFFFFF" stroke="#D6E5ED" stroke-width="2"/>
+  <text x="860" y="1905" fill="#8A5CF6" font-family="Pretendard, Inter, sans-serif" font-size="28" font-weight="800">트렌드 및 운영 모니터링</text>
+  <text x="860" y="1949" fill="#4B6679" font-family="Pretendard, Inter, sans-serif" font-size="22" font-weight="500">소스 상태, 기사 흐름, 카테고리 변화까지 함께 확인 가능</text>
+
+  <text x="120" y="2080" fill="#15324C" font-family="Pretendard, Inter, sans-serif" font-size="26" font-weight="700">한 문장으로 요약하면</text>
+  <text x="120" y="2130" fill="#103C63" font-family="Pretendard, Inter, sans-serif" font-size="34" font-weight="800">"Briefwave는 드론·AI 분야의 흩어진 정보를 수집하고, 개인화된 판단용 피드로 바꾸는 뉴스 인텔리전스 플랫폼입니다."</text>
+</svg>
